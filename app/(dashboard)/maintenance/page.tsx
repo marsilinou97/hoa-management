@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MaintenanceRequestsTable } from '@/components/tables/maintenance-requests-table'
-import { trpc } from '@/app/client'
+import { trpc } from '@/app/_trpc/client'
 import { MaintenanceStatus, MaintenancePriority, MaintenanceCategory } from '@prisma/client'
 
 export default function MaintenancePage() {

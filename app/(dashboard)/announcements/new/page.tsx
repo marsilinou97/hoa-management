@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AnnouncementForm, AnnouncementFormData } from '@/components/forms/announcement-form'
-import { trpc } from '@/app/client'
+import { trpc } from '@/app/_trpc/client'
 
 export default function NewAnnouncementPage() {
   const router = useRouter()

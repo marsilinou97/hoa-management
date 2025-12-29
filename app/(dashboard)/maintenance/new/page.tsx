@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MaintenanceRequestForm, MaintenanceRequestFormData } from '@/components/forms/maintenance-request-form'
-import { trpc } from '@/app/client'
+import { trpc } from '@/app/_trpc/client'
 import { Suspense } from 'react'
 
 function NewMaintenanceRequestContent() {

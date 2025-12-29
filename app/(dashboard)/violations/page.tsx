@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ViolationsTable } from '@/components/tables/violations-table'
-import { trpc } from '@/app/client'
+import { trpc } from '@/app/_trpc/client'
 import { ViolationSeverity, ViolationStatus } from '@prisma/client'
 
 export default function ViolationsPage() {

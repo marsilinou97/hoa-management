@@ -15,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils/balance'
 import { PaymentForm, PaymentFormData } from '@/components/forms/payment-form'
-import { trpc } from '@/app/client'
+import { trpc } from '@/app/_trpc/client'
 
 interface LedgerEntryWithBalance extends LedgerEntry {
   runningBalance: number

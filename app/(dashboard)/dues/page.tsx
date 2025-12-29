@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils/balance'
-import { trpc } from '@/app/client'
+import { trpc } from '@/app/_trpc/client'
 import { BulkAssessmentForm } from '@/components/forms/bulk-assessment-form'
 
 export default function DuesPage() {

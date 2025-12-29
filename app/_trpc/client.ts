@@ -1,7 +1,6 @@
 'use client'
 
-import { createTRPCReact } from '@trpc/react-query'
+import {createTRPCReact} from '@trpc/react-query'
+import type {AppRouter} from '@/app/server/routers/_app'
 
-import type { PostRouter } from '@/app/server/routers/posts'
-
-export const trpc = createTRPCReact<PostRouter>({})
+export const trpc = createTRPCReact<AppRouter>({})

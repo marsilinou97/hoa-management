@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ViolationForm, ViolationFormData } from '@/components/forms/violation-form'
-import { trpc } from '@/app/client'
+import { trpc } from '@/app/_trpc/client'
 import { Suspense } from 'react'
 
 function NewViolationContent() {

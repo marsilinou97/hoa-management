@@ -5,7 +5,7 @@ import { Megaphone, Plus, Archive } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { trpc } from '@/app/client'
+import { trpc } from '@/app/_trpc/client'
 import { AnnouncementPriority } from '@prisma/client'
 
 export default function AnnouncementsPage() {
