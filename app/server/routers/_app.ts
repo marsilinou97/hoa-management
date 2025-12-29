@@ -1,15 +1,24 @@
 import { router } from '../trpc'
+import { authRouter } from './auth'
+import { communityRouter } from './community'
 
 /**
  * Main tRPC router
- * All feature routers will be added here as we build them
+ * All feature routers are combined here
  */
 export const appRouter = router({
-  // Routers will be added here during development
-  // auth: authRouter,
-  // community: communityRouter,
+  auth: authRouter,
+  community: communityRouter,
+  // Additional routers will be added as we build them:
   // units: unitsRouter,
-  // etc.
+  // users: usersRouter,
+  // ledger: ledgerRouter,
+  // violations: violationsRouter,
+  // maintenance: maintenanceRouter,
+  // announcements: announcementsRouter,
+  // documents: documentsRouter,
+  // uploads: uploadsRouter,
+  // dashboard: dashboardRouter,
 })
 
 export type AppRouter = typeof appRouter
