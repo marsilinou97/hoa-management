@@ -7,27 +7,23 @@ import { Checkbox } from '@/components/ui/checkbox'
 
 interface ViolationResponseFormProps {
   violationId: string
-  onSubmit: (data: { message: string; isInternal: boolean }) => Promise<any>
+  onSubmit: (data: { message: string; attachments?: string[] }) => Promise<any>
   isLoading?: boolean
-  canCreateInternal?: boolean
 }
 
 export function ViolationResponseForm({
   violationId,
   onSubmit,
   isLoading,
-  canCreateInternal = false,
 }: ViolationResponseFormProps) {
   const [message, setMessage] = useState('')
-  const [isInternal, setIsInternal] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!message.trim()) return
 
-    await onSubmit({ message: message.trim(), isInternal })
+    await onSubmit({ message: message.trim(), attachments: [] })
     setMessage('')
-    setIsInternal(false)
   }
 
   return (
@@ -50,22 +46,6 @@ export function ViolationResponseForm({
           </p>
         </div>
       </div>
-
-      {canCreateInternal && (
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="isInternal"
-            checked={isInternal}
-            onCheckedChange={(checked) => setIsInternal(checked === true)}
-          />
-          <label
-            htmlFor="isInternal"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Internal note (only visible to admins)
-          </label>
-        </div>
-      )}
 
       <Button type="submit" disabled={isLoading || !message.trim()}>
         {isLoading ? 'Submitting...' : 'Submit Response'}

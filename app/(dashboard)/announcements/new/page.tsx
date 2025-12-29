@@ -41,7 +41,7 @@ export default function NewAnnouncementPage() {
       <AnnouncementForm
         onSubmit={handleSubmit}
         onCancel={() => router.push('/announcements')}
-        isLoading={createAnnouncement.isPending}
+        isLoading={createAnnouncement.isLoading}
       />
     </div>
   )

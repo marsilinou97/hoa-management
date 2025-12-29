@@ -173,9 +173,9 @@ export function BulkAssessmentForm({
       <div className="flex gap-4">
         <Button
           type="submit"
-          disabled={bulkAssessment.isPending || selectedUnits.length === 0}
+          disabled={bulkAssessment.isLoading || selectedUnits.length === 0}
         >
-          {bulkAssessment.isPending
+          {bulkAssessment.isLoading
             ? 'Creating Assessments...'
             : `Create ${selectedUnits.length} Assessment${selectedUnits.length !== 1 ? 's' : ''}`}
         </Button>
@@ -183,7 +183,7 @@ export function BulkAssessmentForm({
           type="button"
           variant="outline"
           onClick={onCancel}
-          disabled={bulkAssessment.isPending}
+          disabled={bulkAssessment.isLoading}
         >
           Cancel
         </Button>

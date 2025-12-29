@@ -57,7 +57,7 @@ function NewMaintenanceRequestContent() {
         unitAddress={unit?.address}
         onSubmit={handleSubmit}
         onCancel={() => router.push('/maintenance')}
-        isLoading={createRequest.isPending}
+        isLoading={createRequest.isLoading}
       />
     </div>
   )

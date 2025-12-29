@@ -300,9 +300,9 @@ export const violationsRouter = router({
         })
 
         // Handle fine amount updates
-        if (data.fineAmount !== undefined) {
+        if (data.fineAmount !== undefined && data.fineAmount !== null) {
           const existingFine = existing.ledgerEntries.find(
-            (e) => e.type === LedgerEntryType.VIOLATION_FINE
+            (e: any) => e.type === LedgerEntryType.VIOLATION_FINE
           )
 
           if (existingFine) {

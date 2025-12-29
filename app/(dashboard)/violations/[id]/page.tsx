@@ -84,8 +84,8 @@ export default function ViolationDetailPage({
         return <Badge variant="warning">Acknowledged</Badge>
       case ViolationStatus.RESOLVED:
         return <Badge variant="success">Resolved</Badge>
-      case ViolationStatus.DISMISSED:
-        return <Badge variant="secondary">Dismissed</Badge>
+      case ViolationStatus.CLOSED:
+        return <Badge variant="secondary">Closed</Badge>
     }
   }
 
@@ -143,7 +143,7 @@ export default function ViolationDetailPage({
             variant="outline"
             size="sm"
             onClick={handleDelete}
-            disabled={deleteViolation.isPending}
+            disabled={deleteViolation.isLoading}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
@@ -171,15 +171,15 @@ export default function ViolationDetailPage({
                 <div>
                   <p className="text-sm font-medium">Reported Date</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {new Date(violation.reportedAt).toLocaleDateString()}
+                    {new Date(violation.createdAt).toLocaleDateString()}
                   </p>
                 </div>
 
-                {violation.resolvedAt && (
+                {violation.closedAt && (
                   <div>
-                    <p className="text-sm font-medium">Resolved Date</p>
+                    <p className="text-sm font-medium">Closed Date</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {new Date(violation.resolvedAt).toLocaleDateString()}
+                      {new Date(violation.closedAt).toLocaleDateString()}
                     </p>
                   </div>
                 )}
@@ -210,7 +210,7 @@ export default function ViolationDetailPage({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {violation.responses.map((response) => (
+                {violation.responses.map((response: any) => (
                   <div
                     key={response.id}
                     className="rounded-lg border bg-muted/50 p-4"
@@ -218,18 +218,12 @@ export default function ViolationDetailPage({
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium">
-                          {response.createdBy.firstName}{' '}
-                          {response.createdBy.lastName}
+                          {response.user.firstName}{' '}
+                          {response.user.lastName}
                         </p>
                         <Badge variant="outline" className="text-xs">
-                          {response.createdBy.role}
+                          {response.user.role}
                         </Badge>
-                        {response.isInternal && (
-                          <Badge variant="secondary" className="text-xs">
-                            <Lock className="mr-1 h-3 w-3" />
-                            Internal
-                          </Badge>
-                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {new Date(response.createdAt).toLocaleString()}
@@ -255,11 +249,10 @@ export default function ViolationDetailPage({
                     submitResponse.mutateAsync({
                       violationId: id,
                       message: data.message,
-                      isInternal: data.isInternal,
+                      attachments: data.attachments || [],
                     })
                   }
-                  isLoading={submitResponse.isPending}
-                  canCreateInternal={true}
+                  isLoading={submitResponse.isLoading}
                 />
               </div>
             </CardContent>
@@ -309,7 +302,7 @@ export default function ViolationDetailPage({
                   onClick={() => handleStatusChange(ViolationStatus.ACKNOWLEDGED)}
                   disabled={
                     violation.status === ViolationStatus.ACKNOWLEDGED ||
-                    updateViolation.isPending
+                    updateViolation.isLoading
                   }
                 >
                   Mark as Acknowledged
@@ -321,7 +314,7 @@ export default function ViolationDetailPage({
                   onClick={() => handleStatusChange(ViolationStatus.RESOLVED)}
                   disabled={
                     violation.status === ViolationStatus.RESOLVED ||
-                    updateViolation.isPending
+                    updateViolation.isLoading
                   }
                 >
                   Mark as Resolved
@@ -330,13 +323,13 @@ export default function ViolationDetailPage({
                   variant="outline"
                   size="sm"
                   className="w-full justify-start"
-                  onClick={() => handleStatusChange(ViolationStatus.DISMISSED)}
+                  onClick={() => handleStatusChange(ViolationStatus.CLOSED)}
                   disabled={
-                    violation.status === ViolationStatus.DISMISSED ||
-                    updateViolation.isPending
+                    violation.status === ViolationStatus.CLOSED ||
+                    updateViolation.isLoading
                   }
                 >
-                  Dismiss Violation
+                  Close Violation
                 </Button>
               </div>
 

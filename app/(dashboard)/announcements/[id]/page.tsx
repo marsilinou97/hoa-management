@@ -74,7 +74,7 @@ export default function AnnouncementDetailPage({
             variant="outline"
             size="sm"
             onClick={handleTogglePin}
-            disabled={togglePin.isPending}
+            disabled={togglePin.isLoading}
           >
             {announcement.isPinned ? (
               <>
@@ -92,7 +92,7 @@ export default function AnnouncementDetailPage({
             variant="outline"
             size="sm"
             onClick={handleDelete}
-            disabled={deleteAnnouncement.isPending}
+            disabled={deleteAnnouncement.isLoading}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Delete

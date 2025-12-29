@@ -116,7 +116,7 @@ export default function MaintenanceDetailPage({
             </div>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={handleDelete} disabled={deleteRequest.isPending}>
+        <Button variant="outline" size="sm" onClick={handleDelete} disabled={deleteRequest.isLoading}>
           <Trash2 className="mr-2 h-4 w-4" />
           Delete
         </Button>
@@ -226,8 +226,8 @@ export default function MaintenanceDetailPage({
                     placeholder="Type your update..."
                   />
                 </div>
-                <Button type="submit" disabled={addUpdate.isPending || !updateMessage.trim()}>
-                  {addUpdate.isPending ? 'Submitting...' : 'Submit Update'}
+                <Button type="submit" disabled={addUpdate.isLoading || !updateMessage.trim()}>
+                  {addUpdate.isLoading ? 'Submitting...' : 'Submit Update'}
                 </Button>
               </form>
             </CardContent>
@@ -248,7 +248,7 @@ export default function MaintenanceDetailPage({
                   size="sm"
                   className="w-full justify-start"
                   onClick={() => handleStatusChange(MaintenanceStatus.IN_REVIEW)}
-                  disabled={request.status === MaintenanceStatus.IN_REVIEW || updateRequest.isPending}
+                  disabled={request.status === MaintenanceStatus.IN_REVIEW || updateRequest.isLoading}
                 >
                   Mark In Review
                 </Button>
@@ -257,7 +257,7 @@ export default function MaintenanceDetailPage({
                   size="sm"
                   className="w-full justify-start"
                   onClick={() => handleStatusChange(MaintenanceStatus.IN_PROGRESS)}
-                  disabled={request.status === MaintenanceStatus.IN_PROGRESS || updateRequest.isPending}
+                  disabled={request.status === MaintenanceStatus.IN_PROGRESS || updateRequest.isLoading}
                 >
                   Mark In Progress
                 </Button>
@@ -266,7 +266,7 @@ export default function MaintenanceDetailPage({
                   size="sm"
                   className="w-full justify-start"
                   onClick={() => handleStatusChange(MaintenanceStatus.COMPLETED)}
-                  disabled={request.status === MaintenanceStatus.COMPLETED || updateRequest.isPending}
+                  disabled={request.status === MaintenanceStatus.COMPLETED || updateRequest.isLoading}
                 >
                   Mark Completed
                 </Button>
@@ -275,7 +275,7 @@ export default function MaintenanceDetailPage({
                   size="sm"
                   className="w-full justify-start"
                   onClick={() => handleStatusChange(MaintenanceStatus.DECLINED)}
-                  disabled={request.status === MaintenanceStatus.DECLINED || updateRequest.isPending}
+                  disabled={request.status === MaintenanceStatus.DECLINED || updateRequest.isLoading}
                 >
                   Decline Request
                 </Button>
