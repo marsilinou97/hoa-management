@@ -8,17 +8,17 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ViolationsTable } from '@/components/tables/violations-table'
 import { trpc } from '@/app/_trpc/client'
-import { ViolationSeverity, ViolationStatus } from '@prisma/client'
+import { ViolationType, ViolationStatus } from '@prisma/client'
 
 export default function ViolationsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<ViolationStatus | 'all'>('all')
-  const [severityFilter, setSeverityFilter] = useState<ViolationSeverity | 'all'>('all')
+  const [typeFilter, setTypeFilter] = useState<ViolationType | 'all'>('all')
 
   const { data, isLoading } = trpc.violations.list.useQuery({
     search,
     status: statusFilter === 'all' ? undefined : statusFilter,
-    severity: severityFilter === 'all' ? undefined : severityFilter,
+    type: typeFilter === 'all' ? undefined : typeFilter,
   })
 
   const { data: stats } = trpc.violations.getStats.useQuery()
@@ -121,15 +121,19 @@ export default function ViolationsPage() {
               <option value={ViolationStatus.DISMISSED}>Dismissed</option>
             </select>
             <select
-              value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value as any)}
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as any)}
               className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="all">All Severities</option>
-              <option value={ViolationSeverity.LOW}>Low</option>
-              <option value={ViolationSeverity.MEDIUM}>Medium</option>
-              <option value={ViolationSeverity.HIGH}>High</option>
-              <option value={ViolationSeverity.CRITICAL}>Critical</option>
+              <option value="all">All Types</option>
+              <option value={ViolationType.PARKING}>Parking</option>
+              <option value={ViolationType.LANDSCAPING}>Landscaping</option>
+              <option value={ViolationType.EXTERIOR_MAINTENANCE}>Exterior Maintenance</option>
+              <option value={ViolationType.NOISE}>Noise</option>
+              <option value={ViolationType.TRASH}>Trash/Garbage</option>
+              <option value={ViolationType.PET}>Pet Related</option>
+              <option value={ViolationType.ARCHITECTURAL}>Architectural</option>
+              <option value={ViolationType.OTHER}>Other</option>
             </select>
           </div>
 

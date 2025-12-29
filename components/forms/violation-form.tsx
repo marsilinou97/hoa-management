@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ViolationSeverity } from '@prisma/client'
+import { ViolationType } from '@prisma/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,7 +14,7 @@ interface ViolationFormProps {
     id: string
     title: string
     description: string
-    severity: ViolationSeverity
+    type: ViolationType
     fineAmount: number | null
   }
   onSubmit: (data: ViolationFormData) => Promise<void>
@@ -26,8 +26,9 @@ export interface ViolationFormData {
   unitId: string
   title: string
   description: string
-  severity: ViolationSeverity
+  type: ViolationType
   fineAmount?: number
+  dueDate?: Date
 }
 
 export function ViolationForm({
@@ -42,9 +43,11 @@ export function ViolationForm({
     unitId: initialUnitId || violation?.id || '',
     title: violation?.title || '',
     description: violation?.description || '',
-    severity: violation?.severity || ViolationSeverity.MEDIUM,
+    type: violation?.type || ViolationType.OTHER,
     fineAmount: violation?.fineAmount ? Number(violation.fineAmount) : undefined,
   })
+
+  const [dueDateString, setDueDateString] = useState('')
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -52,33 +55,28 @@ export function ViolationForm({
     >
   ) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === 'fineAmount'
-          ? value
-            ? parseFloat(value)
-            : undefined
-          : value,
-    }))
+    if (name === 'dueDate') {
+      setDueDateString(value)
+      setFormData((prev) => ({
+        ...prev,
+        dueDate: value ? new Date(value) : undefined,
+      }))
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]:
+          name === 'fineAmount'
+            ? value
+              ? parseFloat(value)
+              : undefined
+            : value,
+      }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     await onSubmit(formData)
-  }
-
-  const getSeverityColor = (severity: ViolationSeverity) => {
-    switch (severity) {
-      case ViolationSeverity.LOW:
-        return 'text-blue-600'
-      case ViolationSeverity.MEDIUM:
-        return 'text-yellow-600'
-      case ViolationSeverity.HIGH:
-        return 'text-orange-600'
-      case ViolationSeverity.CRITICAL:
-        return 'text-red-600'
-    }
   }
 
   return (
@@ -132,38 +130,28 @@ export function ViolationForm({
             />
           </div>
 
-          {/* Severity */}
+          {/* Type */}
           <div className="space-y-2">
-            <Label htmlFor="severity">
-              Severity <span className="text-red-500">*</span>
+            <Label htmlFor="type">
+              Violation Type <span className="text-red-500">*</span>
             </Label>
             <select
-              id="severity"
-              name="severity"
+              id="type"
+              name="type"
               required
-              value={formData.severity}
+              value={formData.type}
               onChange={handleChange}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value={ViolationSeverity.LOW}>
-                Low - Minor issue
-              </option>
-              <option value={ViolationSeverity.MEDIUM}>
-                Medium - Moderate concern
-              </option>
-              <option value={ViolationSeverity.HIGH}>
-                High - Serious violation
-              </option>
-              <option value={ViolationSeverity.CRITICAL}>
-                Critical - Urgent attention required
-              </option>
+              <option value={ViolationType.PARKING}>Parking</option>
+              <option value={ViolationType.LANDSCAPING}>Landscaping</option>
+              <option value={ViolationType.EXTERIOR_MAINTENANCE}>Exterior Maintenance</option>
+              <option value={ViolationType.NOISE}>Noise</option>
+              <option value={ViolationType.TRASH}>Trash/Garbage</option>
+              <option value={ViolationType.PET}>Pet Related</option>
+              <option value={ViolationType.ARCHITECTURAL}>Architectural</option>
+              <option value={ViolationType.OTHER}>Other</option>
             </select>
-            <p className="text-sm text-muted-foreground">
-              Current severity:{' '}
-              <span className={`font-medium ${getSeverityColor(formData.severity)}`}>
-                {formData.severity}
-              </span>
-            </p>
           </div>
 
           {/* Fine Amount */}
@@ -187,6 +175,21 @@ export function ViolationForm({
             </div>
             <p className="text-sm text-muted-foreground">
               This will automatically create a charge in the unit's ledger
+            </p>
+          </div>
+
+          {/* Due Date */}
+          <div className="space-y-2">
+            <Label htmlFor="dueDate">Due Date (Optional)</Label>
+            <Input
+              id="dueDate"
+              name="dueDate"
+              type="date"
+              value={dueDateString}
+              onChange={handleChange}
+            />
+            <p className="text-sm text-muted-foreground">
+              When the fine or corrective action is due
             </p>
           </div>
         </CardContent>

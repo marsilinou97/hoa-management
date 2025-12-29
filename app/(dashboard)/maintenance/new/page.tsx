@@ -30,8 +30,9 @@ function NewMaintenanceRequestContent() {
       title: data.title,
       description: data.description,
       category: data.category,
-      priority: data.priority,
+      urgency: data.urgency,
       location: data.location,
+      photos: data.photos,
     })
   }
 

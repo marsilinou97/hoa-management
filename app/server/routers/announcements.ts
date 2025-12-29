@@ -27,12 +27,8 @@ export const announcementsRouter = router({
       communityId: community.id,
     }
 
-    if (input.priority) {
-      where.priority = input.priority
-    }
-
-    if (!input.includeArchived) {
-      where.isArchived = false
+    if (input.pinnedOnly) {
+      where.isPinned = true
     }
 
     if (input.search) {
@@ -53,30 +49,13 @@ export const announcementsRouter = router({
         },
       },
       orderBy: [
-        { priority: 'desc' },
-        { publishedAt: 'desc' },
+        { isPinned: 'desc' },
+        { createdAt: 'desc' },
       ],
     })
 
-    // Filter out expired announcements for non-admin users
-    const user = await ctx.prisma.user.findFirst({
-      where: {
-        clerkUserId: ctx.userId!,
-        communityId: community.id,
-      },
-    })
-
-    const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN'
-    const now = new Date()
-
     return {
-      announcements: announcements.filter((a) => {
-        // Admins see all
-        if (isAdmin) return true
-        // Hide expired announcements for residents
-        if (a.expiresAt && a.expiresAt < now) return false
-        return true
-      }),
+      announcements,
     }
   }),
 
@@ -124,15 +103,25 @@ export const announcementsRouter = router({
         throw new Error('Community not found')
       }
 
+      // Get user to get database ID
+      const user = await ctx.prisma.user.findFirst({
+        where: {
+          clerkUserId: ctx.userId!,
+          communityId: community.id,
+        },
+      })
+
+      if (!user) {
+        throw new Error('User not found')
+      }
+
       const announcement = await ctx.prisma.announcement.create({
         data: {
           communityId: community.id,
           title: input.title,
           content: input.content,
-          priority: input.priority,
-          publishedAt: input.publishedAt || new Date(),
-          expiresAt: input.expiresAt,
-          createdById: ctx.userId!,
+          isPinned: input.isPinned,
+          createdById: user.id,
         },
       })
 
@@ -199,10 +188,10 @@ export const announcementsRouter = router({
     }),
 
   /**
-   * Archive/unarchive an announcement
+   * Pin/unpin an announcement
    */
-  toggleArchive: adminProcedure
-    .input(z.object({ id: z.string(), isArchived: z.boolean() }))
+  togglePin: adminProcedure
+    .input(z.object({ id: z.string(), isPinned: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       // Verify announcement belongs to this community
       const announcement = await ctx.prisma.announcement.findFirst({
@@ -220,7 +209,7 @@ export const announcementsRouter = router({
 
       const updated = await ctx.prisma.announcement.update({
         where: { id: input.id },
-        data: { isArchived: input.isArchived },
+        data: { isPinned: input.isPinned },
       })
 
       return updated
@@ -240,16 +229,9 @@ export const announcementsRouter = router({
         throw new Error('Community not found')
       }
 
-      const now = new Date()
-
       const announcements = await ctx.prisma.announcement.findMany({
         where: {
           communityId: community.id,
-          isArchived: false,
-          OR: [
-            { expiresAt: null },
-            { expiresAt: { gte: now } },
-          ],
         },
         include: {
           createdBy: {
@@ -260,8 +242,8 @@ export const announcementsRouter = router({
           },
         },
         orderBy: [
-          { priority: 'desc' },
-          { publishedAt: 'desc' },
+          { isPinned: 'desc' },
+          { createdAt: 'desc' },
         ],
         take: input.limit,
       })

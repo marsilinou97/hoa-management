@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ViolationSeverity, ViolationStatus } from '@prisma/client'
+import { ViolationType, ViolationStatus } from '@prisma/client'
 import { AlertTriangle, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,7 +19,7 @@ interface Violation {
   id: string
   title: string
   description: string
-  severity: ViolationSeverity
+  type: ViolationType
   status: ViolationStatus
   fineAmount: number | null
   reportedAt: Date
@@ -44,28 +44,46 @@ export function ViolationsTable({
   violations,
   showUnit = true,
 }: ViolationsTableProps) {
-  const getSeverityBadge = (severity: ViolationSeverity) => {
-    switch (severity) {
-      case ViolationSeverity.LOW:
+  const getTypeBadge = (type: ViolationType) => {
+    switch (type) {
+      case ViolationType.PARKING:
         return (
           <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-            Low
+            Parking
           </Badge>
         )
-      case ViolationSeverity.MEDIUM:
+      case ViolationType.LANDSCAPING:
+        return (
+          <Badge variant="secondary" className="bg-green-100 text-green-800">
+            Landscaping
+          </Badge>
+        )
+      case ViolationType.NOISE:
         return (
           <Badge variant="warning" className="bg-yellow-100 text-yellow-800">
-            Medium
+            Noise
           </Badge>
         )
-      case ViolationSeverity.HIGH:
+      case ViolationType.MAINTENANCE:
         return (
           <Badge variant="warning" className="bg-orange-100 text-orange-800">
-            High
+            Maintenance
           </Badge>
         )
-      case ViolationSeverity.CRITICAL:
-        return <Badge variant="destructive">Critical</Badge>
+      case ViolationType.TRASH:
+        return (
+          <Badge variant="warning" className="bg-amber-100 text-amber-800">
+            Trash
+          </Badge>
+        )
+      case ViolationType.PETS:
+        return (
+          <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+            Pets
+          </Badge>
+        )
+      case ViolationType.MISC:
+        return <Badge variant="secondary">Other</Badge>
     }
   }
 
@@ -101,7 +119,7 @@ export function ViolationsTable({
           <TableRow>
             <TableHead>Title</TableHead>
             {showUnit && <TableHead>Unit</TableHead>}
-            <TableHead>Severity</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Fine</TableHead>
             <TableHead>Reported</TableHead>
@@ -141,7 +159,7 @@ export function ViolationsTable({
                   </Link>
                 </TableCell>
               )}
-              <TableCell>{getSeverityBadge(violation.severity)}</TableCell>
+              <TableCell>{getTypeBadge(violation.type)}</TableCell>
               <TableCell>{getStatusBadge(violation.status)}</TableCell>
               <TableCell>
                 {violation.fineAmount ? (

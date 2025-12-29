@@ -8,17 +8,17 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MaintenanceRequestsTable } from '@/components/tables/maintenance-requests-table'
 import { trpc } from '@/app/_trpc/client'
-import { MaintenanceStatus, MaintenancePriority, MaintenanceCategory } from '@prisma/client'
+import { MaintenanceStatus, Urgency, MaintenanceCategory } from '@prisma/client'
 
 export default function MaintenancePage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<MaintenanceStatus | 'all'>('all')
-  const [priorityFilter, setPriorityFilter] = useState<MaintenancePriority | 'all'>('all')
+  const [urgencyFilter, setUrgencyFilter] = useState<Urgency | 'all'>('all')
 
   const { data, isLoading } = trpc.maintenance.list.useQuery({
     search,
     status: statusFilter === 'all' ? undefined : statusFilter,
-    priority: priorityFilter === 'all' ? undefined : priorityFilter,
+    urgency: urgencyFilter === 'all' ? undefined : urgencyFilter,
   })
 
   const { data: stats } = trpc.maintenance.getStats.useQuery()
@@ -63,7 +63,7 @@ export default function MaintenancePage() {
                 {stats.active}
               </div>
               <p className="text-xs text-muted-foreground">
-                {stats.pending} pending, {stats.inProgress} in progress
+                {stats.submitted} submitted, {stats.inProgress} in progress
               </p>
             </CardContent>
           </Card>
@@ -82,11 +82,11 @@ export default function MaintenancePage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Cancelled</CardTitle>
+              <CardTitle className="text-sm font-medium">Declined</CardTitle>
               <Wrench className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.cancelled}</div>
+              <div className="text-2xl font-bold">{stats.declined}</div>
             </CardContent>
           </Card>
         </div>
@@ -115,21 +115,22 @@ export default function MaintenancePage() {
               className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="all">All Statuses</option>
-              <option value={MaintenanceStatus.PENDING}>Pending</option>
+              <option value={MaintenanceStatus.SUBMITTED}>Submitted</option>
+              <option value={MaintenanceStatus.IN_REVIEW}>In Review</option>
               <option value={MaintenanceStatus.IN_PROGRESS}>In Progress</option>
               <option value={MaintenanceStatus.COMPLETED}>Completed</option>
-              <option value={MaintenanceStatus.CANCELLED}>Cancelled</option>
+              <option value={MaintenanceStatus.DECLINED}>Declined</option>
             </select>
             <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value as any)}
+              value={urgencyFilter}
+              onChange={(e) => setUrgencyFilter(e.target.value as any)}
               className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="all">All Priorities</option>
-              <option value={MaintenancePriority.LOW}>Low</option>
-              <option value={MaintenancePriority.MEDIUM}>Medium</option>
-              <option value={MaintenancePriority.HIGH}>High</option>
-              <option value={MaintenancePriority.URGENT}>Urgent</option>
+              <option value="all">All Urgencies</option>
+              <option value={Urgency.LOW}>Low</option>
+              <option value={Urgency.MEDIUM}>Medium</option>
+              <option value={Urgency.HIGH}>High</option>
+              <option value={Urgency.EMERGENCY}>Emergency</option>
             </select>
           </div>
 

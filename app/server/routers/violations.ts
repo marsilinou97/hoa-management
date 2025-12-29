@@ -11,6 +11,7 @@ import { ViolationStatus, LedgerEntryType } from '@prisma/client'
 /**
  * Violations router
  * Handles violation tracking, responses, and resolution
+ * Updated to match actual Prisma schema
  */
 export const violationsRouter = router({
   /**
@@ -39,8 +40,8 @@ export const violationsRouter = router({
       where.status = input.status
     }
 
-    if (input.severity) {
-      where.severity = input.severity
+    if (input.type) {
+      where.type = input.type
     }
 
     if (input.search) {
@@ -72,7 +73,7 @@ export const violationsRouter = router({
         },
       },
       orderBy: {
-        reportedAt: 'desc',
+        createdAt: 'desc',
       },
     })
 
@@ -115,7 +116,7 @@ export const violationsRouter = router({
           },
           responses: {
             include: {
-              createdBy: {
+              user: {
                 select: {
                   firstName: true,
                   lastName: true,
@@ -127,7 +128,7 @@ export const violationsRouter = router({
               createdAt: 'asc',
             },
           },
-          ledgerEntry: true,
+          ledgerEntries: true,
         },
       })
 
@@ -174,7 +175,7 @@ export const violationsRouter = router({
           },
         },
         orderBy: {
-          reportedAt: 'desc',
+          createdAt: 'desc',
         },
       })
 
@@ -204,38 +205,47 @@ export const violationsRouter = router({
         throw new Error('Unit not found')
       }
 
+      // Get user to get database ID
+      const user = await ctx.prisma.user.findFirst({
+        where: {
+          clerkUserId: ctx.userId!,
+          community: {
+            clerkOrgId: ctx.orgId!,
+          },
+        },
+      })
+
+      if (!user) {
+        throw new Error('User not found')
+      }
+
       // Create violation and optionally create fine in ledger
       const violation = await ctx.prisma.$transaction(async (tx) => {
         const newViolation = await tx.violation.create({
           data: {
             unitId: input.unitId,
+            type: input.type,
             title: input.title,
             description: input.description,
-            severity: input.severity,
+            photos: input.photos || [],
             fineAmount: input.fineAmount,
-            reportedAt: input.reportedAt || new Date(),
-            createdById: ctx.userId!,
+            dueDate: input.dueDate,
+            createdById: user.id,
           },
         })
 
         // If there's a fine amount, create a ledger entry
         if (input.fineAmount && input.fineAmount > 0) {
-          const ledgerEntry = await tx.ledgerEntry.create({
+          await tx.ledgerEntry.create({
             data: {
               unitId: input.unitId,
               type: LedgerEntryType.VIOLATION_FINE,
               amount: input.fineAmount,
               description: `Violation Fine: ${input.title}`,
-              date: input.reportedAt || new Date(),
+              date: new Date(),
               violationId: newViolation.id,
-              createdById: ctx.userId!,
+              createdById: user.id,
             },
-          })
-
-          // Update violation with ledger entry reference
-          await tx.violation.update({
-            where: { id: newViolation.id },
-            data: { ledgerEntryId: ledgerEntry.id },
           })
         }
 
@@ -266,7 +276,7 @@ export const violationsRouter = router({
           },
         },
         include: {
-          ledgerEntry: true,
+          ledgerEntries: true,
         },
       })
 
@@ -280,28 +290,32 @@ export const violationsRouter = router({
           where: { id },
           data: {
             ...data,
-            // Auto-set resolvedAt when status changes to RESOLVED or DISMISSED
-            resolvedAt:
+            // Auto-set closedAt when status changes to RESOLVED or CLOSED
+            closedAt:
               data.status === ViolationStatus.RESOLVED ||
-              data.status === ViolationStatus.DISMISSED
-                ? data.resolvedAt ?? new Date()
-                : data.resolvedAt,
+              data.status === ViolationStatus.CLOSED
+                ? data.closedAt ?? new Date()
+                : data.closedAt,
           },
         })
 
         // Handle fine amount updates
         if (data.fineAmount !== undefined) {
-          if (existing.ledgerEntryId) {
+          const existingFine = existing.ledgerEntries.find(
+            (e) => e.type === LedgerEntryType.VIOLATION_FINE
+          )
+
+          if (existingFine) {
             // Update existing ledger entry
             await tx.ledgerEntry.update({
-              where: { id: existing.ledgerEntryId },
+              where: { id: existingFine.id },
               data: {
                 amount: data.fineAmount,
               },
             })
           } else if (data.fineAmount > 0) {
             // Create new ledger entry for fine
-            const ledgerEntry = await tx.ledgerEntry.create({
+            await tx.ledgerEntry.create({
               data: {
                 unitId: existing.unitId,
                 type: LedgerEntryType.VIOLATION_FINE,
@@ -309,13 +323,8 @@ export const violationsRouter = router({
                 description: `Violation Fine: ${data.title || existing.title}`,
                 date: new Date(),
                 violationId: id,
-                createdById: ctx.userId!,
+                createdById: existing.createdById,
               },
-            })
-
-            await tx.violation.update({
-              where: { id },
-              data: { ledgerEntryId: ledgerEntry.id },
             })
           }
         }
@@ -348,7 +357,7 @@ export const violationsRouter = router({
         throw new Error('Violation not found')
       }
 
-      // Delete violation (cascade will handle responses and ledger entry)
+      // Delete violation (cascade will handle responses)
       await ctx.prisma.violation.delete({
         where: { id: input.id },
       })
@@ -402,17 +411,12 @@ export const violationsRouter = router({
         throw new Error('You can only respond to violations on your unit')
       }
 
-      // Only admins can create internal notes
-      if (input.isInternal && !isAdmin) {
-        throw new Error('Only admins can create internal notes')
-      }
-
       const response = await ctx.prisma.violationResponse.create({
         data: {
           violationId: input.violationId,
+          userId: user.id,
           message: input.message,
-          isInternal: input.isInternal,
-          createdById: ctx.userId!,
+          attachments: input.attachments || [],
         },
       })
 
@@ -441,7 +445,7 @@ export const violationsRouter = router({
       throw new Error('Community not found')
     }
 
-    const [total, open, acknowledged, resolved, dismissed] = await Promise.all([
+    const [total, open, acknowledged, resolved, closed] = await Promise.all([
       ctx.prisma.violation.count({
         where: {
           unit: {
@@ -478,7 +482,7 @@ export const violationsRouter = router({
           unit: {
             communityId: community.id,
           },
-          status: ViolationStatus.DISMISSED,
+          status: ViolationStatus.CLOSED,
         },
       }),
     ])
@@ -488,7 +492,7 @@ export const violationsRouter = router({
       open,
       acknowledged,
       resolved,
-      dismissed,
+      closed,
       active: open + acknowledged,
     }
   }),

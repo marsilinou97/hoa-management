@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { trpc } from '@/app/_trpc/client'
 import { ViolationResponseForm } from '@/components/forms/violation-response-form'
-import { ViolationSeverity, ViolationStatus } from '@prisma/client'
+import { ViolationType, ViolationStatus } from '@prisma/client'
 import { formatCurrency } from '@/lib/utils/balance'
 import { useRouter } from 'next/navigation'
 
@@ -55,28 +55,24 @@ export default function ViolationDetailPage({
     }
   }
 
-  const getSeverityBadge = (severity: ViolationSeverity) => {
-    switch (severity) {
-      case ViolationSeverity.LOW:
-        return (
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-            Low
-          </Badge>
-        )
-      case ViolationSeverity.MEDIUM:
-        return (
-          <Badge variant="warning" className="bg-yellow-100 text-yellow-800">
-            Medium
-          </Badge>
-        )
-      case ViolationSeverity.HIGH:
-        return (
-          <Badge variant="warning" className="bg-orange-100 text-orange-800">
-            High
-          </Badge>
-        )
-      case ViolationSeverity.CRITICAL:
-        return <Badge variant="destructive">Critical</Badge>
+  const getTypeBadge = (type: ViolationType) => {
+    switch (type) {
+      case ViolationType.PARKING:
+        return <Badge variant="secondary">Parking</Badge>
+      case ViolationType.LANDSCAPING:
+        return <Badge variant="secondary">Landscaping</Badge>
+      case ViolationType.EXTERIOR_MAINTENANCE:
+        return <Badge variant="secondary">Exterior Maintenance</Badge>
+      case ViolationType.NOISE:
+        return <Badge variant="warning">Noise</Badge>
+      case ViolationType.TRASH:
+        return <Badge variant="secondary">Trash/Garbage</Badge>
+      case ViolationType.PET:
+        return <Badge variant="secondary">Pet Related</Badge>
+      case ViolationType.ARCHITECTURAL:
+        return <Badge variant="secondary">Architectural</Badge>
+      case ViolationType.OTHER:
+        return <Badge variant="secondary">Other</Badge>
     }
   }
 
@@ -131,7 +127,7 @@ export default function ViolationDetailPage({
               {violation.title}
             </h1>
             <div className="mt-1 flex items-center gap-2">
-              {getSeverityBadge(violation.severity)}
+              {getTypeBadge(violation.type)}
               {getStatusBadge(violation.status)}
               <Link
                 href={`/units/${violation.unit.id}`}

@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { MaintenanceStatus, MaintenancePriority, MaintenanceCategory } from '@prisma/client'
+import { MaintenanceStatus, Urgency, MaintenanceCategory } from '@prisma/client'
 
 /**
  * Validation schemas for Maintenance Request operations
+ * Updated to match actual Prisma schema
  */
 
 export const createMaintenanceRequestSchema = z.object({
@@ -10,8 +11,9 @@ export const createMaintenanceRequestSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title is too long'),
   description: z.string().min(1, 'Description is required'),
   category: z.nativeEnum(MaintenanceCategory),
-  priority: z.nativeEnum(MaintenancePriority),
+  urgency: z.nativeEnum(Urgency),
   location: z.string().optional(), // Specific location within unit
+  photos: z.array(z.string()).optional().default([]), // R2 URLs
 })
 
 export const updateMaintenanceRequestSchema = z.object({
@@ -19,22 +21,23 @@ export const updateMaintenanceRequestSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title is too long').optional(),
   description: z.string().min(1, 'Description is required').optional(),
   category: z.nativeEnum(MaintenanceCategory).optional(),
-  priority: z.nativeEnum(MaintenancePriority).optional(),
+  urgency: z.nativeEnum(Urgency).optional(),
   status: z.nativeEnum(MaintenanceStatus).optional(),
-  assignedToId: z.string().nullable().optional(),
   location: z.string().optional(),
+  adminNotes: z.string().optional(),
 })
 
 export const addMaintenanceUpdateSchema = z.object({
   requestId: z.string().min(1, 'Request ID is required'),
   message: z.string().min(1, 'Message is required').max(2000, 'Message is too long'),
-  isInternal: z.boolean().default(false), // Internal notes only visible to admins
+  isPublic: z.boolean().default(true), // false = admin-only note
+  newStatus: z.nativeEnum(MaintenanceStatus).optional(), // If status was changed
 })
 
 export const listMaintenanceRequestsSchema = z.object({
   unitId: z.string().optional(),
   status: z.nativeEnum(MaintenanceStatus).optional(),
-  priority: z.nativeEnum(MaintenancePriority).optional(),
+  urgency: z.nativeEnum(Urgency).optional(),
   category: z.nativeEnum(MaintenanceCategory).optional(),
   search: z.string().optional(),
 })

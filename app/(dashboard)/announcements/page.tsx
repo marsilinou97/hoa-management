@@ -1,28 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { Megaphone, Plus, Archive } from 'lucide-react'
+import { Megaphone, Plus, Pin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { trpc } from '@/app/_trpc/client'
-import { AnnouncementPriority } from '@prisma/client'
 
 export default function AnnouncementsPage() {
-  const { data, isLoading } = trpc.announcements.list.useQuery({ includeArchived: false })
-
-  const getPriorityBadge = (priority: AnnouncementPriority) => {
-    switch (priority) {
-      case AnnouncementPriority.LOW:
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Low</Badge>
-      case AnnouncementPriority.NORMAL:
-        return <Badge variant="secondary">Normal</Badge>
-      case AnnouncementPriority.HIGH:
-        return <Badge variant="warning" className="bg-orange-100 text-orange-800">High</Badge>
-      case AnnouncementPriority.URGENT:
-        return <Badge variant="destructive">Urgent</Badge>
-    }
-  }
+  const { data, isLoading } = trpc.announcements.list.useQuery({})
 
   return (
     <div className="space-y-6">
@@ -56,26 +42,22 @@ export default function AnnouncementsPage() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <Link href={`/announcements/${announcement.id}`}>
-                      <h3 className="text-lg font-semibold hover:underline">{announcement.title}</h3>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/announcements/${announcement.id}`}>
+                        <h3 className="text-lg font-semibold hover:underline">{announcement.title}</h3>
+                      </Link>
+                      {announcement.isPinned && (
+                        <Pin className="h-4 w-4 text-primary" fill="currentColor" />
+                      )}
+                    </div>
                     <div className="mt-1 flex items-center gap-2">
-                      {getPriorityBadge(announcement.priority)}
                       <span className="text-xs text-muted-foreground">
                         Posted by {announcement.createdBy.firstName} {announcement.createdBy.lastName}
                       </span>
                       <span className="text-xs text-muted-foreground">•</span>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(announcement.publishedAt).toLocaleDateString()}
+                        {new Date(announcement.createdAt).toLocaleDateString()}
                       </span>
-                      {announcement.expiresAt && (
-                        <>
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <span className="text-xs text-muted-foreground">
-                            Expires {new Date(announcement.expiresAt).toLocaleDateString()}
-                          </span>
-                        </>
-                      )}
                     </div>
                   </div>
                   <Link href={`/announcements/${announcement.id}`}>

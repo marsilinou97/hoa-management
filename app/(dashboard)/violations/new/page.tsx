@@ -29,7 +29,8 @@ function NewViolationContent() {
       unitId: data.unitId,
       title: data.title,
       description: data.description,
-      severity: data.severity,
+      type: data.type,
+      dueDate: data.dueDate,
       fineAmount: data.fineAmount,
     })
   }

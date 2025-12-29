@@ -20,8 +20,7 @@ export default function NewAnnouncementPage() {
     await createAnnouncement.mutateAsync({
       title: data.title,
       content: data.content,
-      priority: data.priority,
-      expiresAt: data.expiresAt,
+      isPinned: data.isPinned,
     })
   }
 

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { trpc } from '@/app/_trpc/client'
-import { MaintenanceStatus, MaintenancePriority } from '@prisma/client'
+import { MaintenanceStatus, Urgency } from '@prisma/client'
 import { useRouter } from 'next/navigation'
 import { Label } from '@/components/ui/label'
 
@@ -67,29 +67,31 @@ export default function MaintenanceDetailPage({
   if (isLoading) return <div className="p-6">Loading...</div>
   if (!request) return <div className="p-6">Request not found</div>
 
-  const getPriorityBadge = (priority: MaintenancePriority) => {
-    switch (priority) {
-      case MaintenancePriority.LOW:
+  const getUrgencyBadge = (urgency: Urgency) => {
+    switch (urgency) {
+      case Urgency.LOW:
         return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Low</Badge>
-      case MaintenancePriority.MEDIUM:
+      case Urgency.MEDIUM:
         return <Badge variant="warning" className="bg-yellow-100 text-yellow-800">Medium</Badge>
-      case MaintenancePriority.HIGH:
+      case Urgency.HIGH:
         return <Badge variant="warning" className="bg-orange-100 text-orange-800">High</Badge>
-      case MaintenancePriority.URGENT:
-        return <Badge variant="destructive">Urgent</Badge>
+      case Urgency.EMERGENCY:
+        return <Badge variant="destructive">Emergency</Badge>
     }
   }
 
   const getStatusBadge = (status: MaintenanceStatus) => {
     switch (status) {
-      case MaintenanceStatus.PENDING:
-        return <Badge variant="secondary">Pending</Badge>
+      case MaintenanceStatus.SUBMITTED:
+        return <Badge variant="secondary">Submitted</Badge>
+      case MaintenanceStatus.IN_REVIEW:
+        return <Badge variant="secondary" className="bg-purple-100 text-purple-800">In Review</Badge>
       case MaintenanceStatus.IN_PROGRESS:
         return <Badge variant="warning">In Progress</Badge>
       case MaintenanceStatus.COMPLETED:
         return <Badge variant="success">Completed</Badge>
-      case MaintenanceStatus.CANCELLED:
-        return <Badge variant="outline">Cancelled</Badge>
+      case MaintenanceStatus.DECLINED:
+        return <Badge variant="outline">Declined</Badge>
     }
   }
 
@@ -106,7 +108,7 @@ export default function MaintenanceDetailPage({
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{request.title}</h1>
             <div className="mt-1 flex items-center gap-2">
-              {getPriorityBadge(request.priority)}
+              {getUrgencyBadge(request.urgency)}
               {getStatusBadge(request.status)}
               <Link href={`/units/${request.unit.id}`} className="text-sm text-primary hover:underline">
                 {request.unit.address}
@@ -245,6 +247,15 @@ export default function MaintenanceDetailPage({
                   variant="outline"
                   size="sm"
                   className="w-full justify-start"
+                  onClick={() => handleStatusChange(MaintenanceStatus.IN_REVIEW)}
+                  disabled={request.status === MaintenanceStatus.IN_REVIEW || updateRequest.isPending}
+                >
+                  Mark In Review
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start"
                   onClick={() => handleStatusChange(MaintenanceStatus.IN_PROGRESS)}
                   disabled={request.status === MaintenanceStatus.IN_PROGRESS || updateRequest.isPending}
                 >
@@ -263,10 +274,10 @@ export default function MaintenanceDetailPage({
                   variant="outline"
                   size="sm"
                   className="w-full justify-start"
-                  onClick={() => handleStatusChange(MaintenanceStatus.CANCELLED)}
-                  disabled={request.status === MaintenanceStatus.CANCELLED || updateRequest.isPending}
+                  onClick={() => handleStatusChange(MaintenanceStatus.DECLINED)}
+                  disabled={request.status === MaintenanceStatus.DECLINED || updateRequest.isPending}
                 >
-                  Cancel Request
+                  Decline Request
                 </Button>
               </div>
             </CardContent>

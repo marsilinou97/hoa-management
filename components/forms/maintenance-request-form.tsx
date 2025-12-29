@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MaintenanceCategory, MaintenancePriority } from '@prisma/client'
+import { MaintenanceCategory, Urgency } from '@prisma/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,8 +15,9 @@ interface MaintenanceRequestFormProps {
     title: string
     description: string
     category: MaintenanceCategory
-    priority: MaintenancePriority
+    urgency: Urgency
     location?: string | null
+    photos?: string[]
   }
   onSubmit: (data: MaintenanceRequestFormData) => Promise<void>
   onCancel: () => void
@@ -28,8 +29,9 @@ export interface MaintenanceRequestFormData {
   title: string
   description: string
   category: MaintenanceCategory
-  priority: MaintenancePriority
+  urgency: Urgency
   location?: string
+  photos?: string[]
 }
 
 export function MaintenanceRequestForm({
@@ -45,8 +47,9 @@ export function MaintenanceRequestForm({
     title: request?.title || '',
     description: request?.description || '',
     category: request?.category || MaintenanceCategory.GENERAL,
-    priority: request?.priority || MaintenancePriority.MEDIUM,
+    urgency: request?.urgency || Urgency.MEDIUM,
     location: request?.location || '',
+    photos: request?.photos || [],
   })
 
   const handleChange = (
@@ -66,15 +69,15 @@ export function MaintenanceRequestForm({
     await onSubmit(formData)
   }
 
-  const getPriorityColor = (priority: MaintenancePriority) => {
-    switch (priority) {
-      case MaintenancePriority.LOW:
+  const getUrgencyColor = (urgency: Urgency) => {
+    switch (urgency) {
+      case Urgency.LOW:
         return 'text-blue-600'
-      case MaintenancePriority.MEDIUM:
+      case Urgency.MEDIUM:
         return 'text-yellow-600'
-      case MaintenancePriority.HIGH:
+      case Urgency.HIGH:
         return 'text-orange-600'
-      case MaintenancePriority.URGENT:
+      case Urgency.EMERGENCY:
         return 'text-red-600'
     }
   }
@@ -138,36 +141,36 @@ export function MaintenanceRequestForm({
             </select>
           </div>
 
-          {/* Priority */}
+          {/* Urgency */}
           <div className="space-y-2">
-            <Label htmlFor="priority">
-              Priority <span className="text-red-500">*</span>
+            <Label htmlFor="urgency">
+              Urgency <span className="text-red-500">*</span>
             </Label>
             <select
-              id="priority"
-              name="priority"
+              id="urgency"
+              name="urgency"
               required
-              value={formData.priority}
+              value={formData.urgency}
               onChange={handleChange}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value={MaintenancePriority.LOW}>
+              <option value={Urgency.LOW}>
                 Low - Can wait
               </option>
-              <option value={MaintenancePriority.MEDIUM}>
+              <option value={Urgency.MEDIUM}>
                 Medium - Normal timeline
               </option>
-              <option value={MaintenancePriority.HIGH}>
+              <option value={Urgency.HIGH}>
                 High - Needs attention soon
               </option>
-              <option value={MaintenancePriority.URGENT}>
-                Urgent - Immediate attention required
+              <option value={Urgency.EMERGENCY}>
+                Emergency - Immediate attention required
               </option>
             </select>
             <p className="text-sm text-muted-foreground">
-              Current priority:{' '}
-              <span className={`font-medium ${getPriorityColor(formData.priority)}`}>
-                {formData.priority}
+              Current urgency:{' '}
+              <span className={`font-medium ${getUrgencyColor(formData.urgency)}`}>
+                {formData.urgency}
               </span>
             </p>
           </div>
@@ -199,6 +202,27 @@ export function MaintenanceRequestForm({
               className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Provide detailed information about the issue..."
             />
+          </div>
+
+          {/* Photos */}
+          <div className="space-y-2">
+            <Label htmlFor="photos">Photos (Optional)</Label>
+            <Input
+              id="photos"
+              name="photos"
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => {
+                const files = Array.from(e.target.files || [])
+                // Note: In a real implementation, you would handle file uploads here
+                // For now, this is a placeholder for file input handling
+              }}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <p className="text-sm text-muted-foreground">
+              Upload photos to help document the issue
+            </p>
           </div>
         </CardContent>
       </Card>

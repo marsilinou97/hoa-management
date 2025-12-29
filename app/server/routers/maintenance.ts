@@ -39,8 +39,8 @@ export const maintenanceRouter = router({
       where.status = input.status
     }
 
-    if (input.priority) {
-      where.priority = input.priority
+    if (input.urgency) {
+      where.urgency = input.urgency
     }
 
     if (input.category) {
@@ -64,12 +64,6 @@ export const maintenanceRouter = router({
           },
         },
         createdBy: {
-          select: {
-            firstName: true,
-            lastName: true,
-          },
-        },
-        assignedTo: {
           select: {
             firstName: true,
             lastName: true,
@@ -123,16 +117,9 @@ export const maintenanceRouter = router({
               lastName: true,
             },
           },
-          assignedTo: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
           updates: {
             include: {
-              createdBy: {
+              user: {
                 select: {
                   firstName: true,
                   lastName: true,
@@ -178,12 +165,6 @@ export const maintenanceRouter = router({
         where: { unitId: input.unitId },
         include: {
           createdBy: {
-            select: {
-              firstName: true,
-              lastName: true,
-            },
-          },
-          assignedTo: {
             select: {
               firstName: true,
               lastName: true,
@@ -252,9 +233,10 @@ export const maintenanceRouter = router({
           title: input.title,
           description: input.description,
           category: input.category,
-          priority: input.priority,
+          urgency: input.urgency,
           location: input.location,
-          createdById: ctx.userId!,
+          photos: input.photos || [],
+          createdById: user.id,
         },
       })
 
@@ -295,7 +277,8 @@ export const maintenanceRouter = router({
           completedAt:
             data.status === MaintenanceStatus.COMPLETED
               ? new Date()
-              : data.status === MaintenanceStatus.PENDING ||
+              : data.status === MaintenanceStatus.SUBMITTED ||
+                data.status === MaintenanceStatus.IN_REVIEW ||
                 data.status === MaintenanceStatus.IN_PROGRESS
               ? null
               : existing.completedAt,
@@ -382,27 +365,39 @@ export const maintenanceRouter = router({
         throw new Error('You can only update requests on your unit')
       }
 
-      // Only admins can create internal notes
-      if (input.isInternal && !isAdmin) {
-        throw new Error('Only admins can create internal notes')
+      // Only admins can create private notes
+      if (!input.isPublic && !isAdmin) {
+        throw new Error('Only admins can create private notes')
       }
 
-      const update = await ctx.prisma.maintenanceUpdate.create({
-        data: {
-          requestId: input.requestId,
-          message: input.message,
-          isInternal: input.isInternal,
-          createdById: ctx.userId!,
-        },
-      })
-
-      // Auto-acknowledge request on first update
-      if (request.status === MaintenanceStatus.PENDING) {
-        await ctx.prisma.maintenanceRequest.update({
-          where: { id: input.requestId },
-          data: { status: MaintenanceStatus.IN_PROGRESS },
+      // Update request with transaction if status is changing
+      const update = await ctx.prisma.$transaction(async (tx) => {
+        const newUpdate = await tx.maintenanceUpdate.create({
+          data: {
+            requestId: input.requestId,
+            message: input.message,
+            isPublic: input.isPublic,
+            newStatus: input.newStatus,
+            userId: user.id,
+          },
         })
-      }
+
+        // Update status if provided
+        if (input.newStatus) {
+          await tx.maintenanceRequest.update({
+            where: { id: input.requestId },
+            data: { status: input.newStatus },
+          })
+        } else if (request.status === MaintenanceStatus.SUBMITTED) {
+          // Auto-move to IN_REVIEW on first update
+          await tx.maintenanceRequest.update({
+            where: { id: input.requestId },
+            data: { status: MaintenanceStatus.IN_REVIEW },
+          })
+        }
+
+        return newUpdate
+      })
 
       // TODO: Send notification to relevant parties via Novu
 
@@ -421,7 +416,7 @@ export const maintenanceRouter = router({
       throw new Error('Community not found')
     }
 
-    const [total, pending, inProgress, completed, cancelled] = await Promise.all([
+    const [total, submitted, inReview, inProgress, completed, declined] = await Promise.all([
       ctx.prisma.maintenanceRequest.count({
         where: {
           unit: {
@@ -434,7 +429,15 @@ export const maintenanceRouter = router({
           unit: {
             communityId: community.id,
           },
-          status: MaintenanceStatus.PENDING,
+          status: MaintenanceStatus.SUBMITTED,
+        },
+      }),
+      ctx.prisma.maintenanceRequest.count({
+        where: {
+          unit: {
+            communityId: community.id,
+          },
+          status: MaintenanceStatus.IN_REVIEW,
         },
       }),
       ctx.prisma.maintenanceRequest.count({
@@ -458,18 +461,19 @@ export const maintenanceRouter = router({
           unit: {
             communityId: community.id,
           },
-          status: MaintenanceStatus.CANCELLED,
+          status: MaintenanceStatus.DECLINED,
         },
       }),
     ])
 
     return {
       total,
-      pending,
+      submitted,
+      inReview,
       inProgress,
       completed,
-      cancelled,
-      active: pending + inProgress,
+      declined,
+      active: submitted + inReview + inProgress,
     }
   }),
 })

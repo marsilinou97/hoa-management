@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { MaintenanceCategory, MaintenancePriority, MaintenanceStatus } from '@prisma/client'
+import { MaintenanceCategory, Urgency, MaintenanceStatus } from '@prisma/client'
 import { Wrench, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,7 +19,7 @@ interface MaintenanceRequest {
   title: string
   description: string
   category: MaintenanceCategory
-  priority: MaintenancePriority
+  urgency: Urgency
   status: MaintenanceStatus
   location: string | null
   createdAt: Date
@@ -48,41 +48,43 @@ export function MaintenanceRequestsTable({
   requests,
   showUnit = true,
 }: MaintenanceRequestsTableProps) {
-  const getPriorityBadge = (priority: MaintenancePriority) => {
-    switch (priority) {
-      case MaintenancePriority.LOW:
+  const getUrgencyBadge = (urgency: Urgency) => {
+    switch (urgency) {
+      case Urgency.LOW:
         return (
           <Badge variant="secondary" className="bg-blue-100 text-blue-800">
             Low
           </Badge>
         )
-      case MaintenancePriority.MEDIUM:
+      case Urgency.MEDIUM:
         return (
           <Badge variant="warning" className="bg-yellow-100 text-yellow-800">
             Medium
           </Badge>
         )
-      case MaintenancePriority.HIGH:
+      case Urgency.HIGH:
         return (
           <Badge variant="warning" className="bg-orange-100 text-orange-800">
             High
           </Badge>
         )
-      case MaintenancePriority.URGENT:
-        return <Badge variant="destructive">Urgent</Badge>
+      case Urgency.EMERGENCY:
+        return <Badge variant="destructive">Emergency</Badge>
     }
   }
 
   const getStatusBadge = (status: MaintenanceStatus) => {
     switch (status) {
-      case MaintenanceStatus.PENDING:
-        return <Badge variant="secondary">Pending</Badge>
+      case MaintenanceStatus.SUBMITTED:
+        return <Badge variant="secondary">Submitted</Badge>
+      case MaintenanceStatus.IN_REVIEW:
+        return <Badge variant="secondary">In Review</Badge>
       case MaintenanceStatus.IN_PROGRESS:
         return <Badge variant="warning">In Progress</Badge>
       case MaintenanceStatus.COMPLETED:
         return <Badge variant="success">Completed</Badge>
-      case MaintenanceStatus.CANCELLED:
-        return <Badge variant="outline">Cancelled</Badge>
+      case MaintenanceStatus.DECLINED:
+        return <Badge variant="outline">Declined</Badge>
     }
   }
 
@@ -110,7 +112,7 @@ export function MaintenanceRequestsTable({
             <TableHead>Title</TableHead>
             {showUnit && <TableHead>Unit</TableHead>}
             <TableHead>Category</TableHead>
-            <TableHead>Priority</TableHead>
+            <TableHead>Urgency</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Assigned To</TableHead>
             <TableHead>Created</TableHead>
@@ -155,7 +157,7 @@ export function MaintenanceRequestsTable({
               <TableCell className="text-sm">
                 {getCategoryDisplay(request.category)}
               </TableCell>
-              <TableCell>{getPriorityBadge(request.priority)}</TableCell>
+              <TableCell>{getUrgencyBadge(request.urgency)}</TableCell>
               <TableCell>{getStatusBadge(request.status)}</TableCell>
               <TableCell className="text-sm text-muted-foreground">
                 {request.assignedTo ? (
