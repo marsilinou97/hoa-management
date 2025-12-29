@@ -1,8 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import { Sidebar } from '@/components/layout/sidebar'
-import { Header } from '@/components/layout/header'
 import { prisma } from '@/lib/prisma'
+import { DashboardClientWrapper } from '@/components/dashboard-client-wrapper'
 
 export default async function DashboardLayout({
   children,
@@ -38,18 +37,16 @@ export default async function DashboardLayout({
     redirect('/onboarding')
   }
 
+  const userEmail = user.email || `${user.firstName.toLowerCase()}@${user.community.name.toLowerCase().replace(/\s+/g, '')}.com`
+
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar userRole={user.role} />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header
-          communityName={user.community.name}
-          userName={`${user.firstName} ${user.lastName}`}
-        />
-        <main className="flex-1 overflow-y-auto bg-muted/10 p-6">
-          {children}
-        </main>
-      </div>
-    </div>
+    <DashboardClientWrapper
+      userRole={user.role}
+      userName={`${user.firstName} ${user.lastName}`}
+      userEmail={userEmail}
+      communityName={user.community.name}
+    >
+      {children}
+    </DashboardClientWrapper>
   )
 }

@@ -4,21 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
-  Building2,
-  Users,
-  DollarSign,
-  AlertTriangle,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  FileText,
-  Wrench,
   Plus,
   ArrowRight,
   Pin,
+  Wrench,
 } from 'lucide-react'
 import { calculateBalance } from '@/lib/utils/balance'
 import Link from 'next/link'
+import { HOAStatsCards } from '@/components/hoa-stats-cards'
 
 export default async function DashboardPage() {
   const { userId, orgId } = await auth()
@@ -211,8 +204,8 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <>
+      <div className="flex items-center justify-between px-4 lg:px-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             Welcome back, {user.firstName}
@@ -235,72 +228,12 @@ export default async function DashboardPage() {
         )}
       </div>
 
+      {/* Stats Cards */}
+      <HOAStatsCards stats={stats} isAdmin={isAdmin} />
+
       {isAdmin ? (
-        <>
+        <div className="px-4 lg:px-6 space-y-6">
           {/* Admin Dashboard */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Units
-                </CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalUnits}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats.activeResidents} active residents
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Outstanding Dues
-                </CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  ${stats.outstandingDues.toFixed(2)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Across all units
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Open Violations
-                </CardTitle>
-                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.openViolations}</div>
-                <p className="text-xs text-muted-foreground">
-                  Require attention
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Maintenance Requests
-                </CardTitle>
-                <Wrench className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.pendingMaintenance}</div>
-                <p className="text-xs text-muted-foreground">
-                  Pending action
-                </p>
-              </CardContent>
-            </Card>
-          </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
@@ -448,9 +381,9 @@ export default async function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-        </>
+        </div>
       ) : (
-        <>
+        <div className="px-4 lg:px-6 space-y-6">
           {/* Resident Dashboard */}
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
@@ -621,8 +554,8 @@ export default async function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-        </>
+        </div>
       )}
-    </div>
+    </>
   )
 }
