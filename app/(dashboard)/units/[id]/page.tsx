@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils/balance'
+import { trpc } from '@/app/client'
+import { LedgerTable } from '@/components/tables/ledger-table'
 
 export default function UnitDetailPage({
   params,
@@ -16,9 +18,12 @@ export default function UnitDetailPage({
 }) {
   const { id } = use(params)
 
-  // TODO: Replace with actual tRPC query
-  const unit = null
-  const isLoading = false
+  const { data: unit, isLoading } = trpc.units.get.useQuery({ id })
+  const {
+    data: ledgerData,
+    isLoading: ledgerLoading,
+    refetch: refetchLedger,
+  } = trpc.ledger.getByUnit.useQuery({ unitId: id })
 
   if (isLoading) {
     return <div className="p-6">Loading...</div>
@@ -41,19 +46,8 @@ export default function UnitDetailPage({
     )
   }
 
-  // Placeholder data
-  const unitData = {
-    address: '123 Main St, Unit 101',
-    ownerName: 'John Smith',
-    ownerEmail: 'john@example.com',
-    ownerPhone: '(555) 123-4567',
-    tenantName: null,
-    balance: 0,
-    isActive: true,
-    residents: [],
-    violations: [],
-    maintenanceRequests: [],
-  }
+  const balance = ledgerData?.balance ?? 0
+  const ledgerEntries = ledgerData?.entries ?? []
 
   return (
     <div className="space-y-6">
@@ -66,15 +60,15 @@ export default function UnitDetailPage({
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{unitData.address}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{unit.address}</h1>
             <div className="mt-1 flex items-center gap-2">
-              <Badge variant={unitData.isActive ? 'success' : 'secondary'}>
-                {unitData.isActive ? 'Active' : 'Inactive'}
+              <Badge variant={unit.isActive ? 'success' : 'secondary'}>
+                {unit.isActive ? 'Active' : 'Inactive'}
               </Badge>
               <span className="text-sm text-muted-foreground">
                 Balance:{' '}
-                <span className={unitData.balance > 0 ? 'text-red-600' : 'text-green-600'}>
-                  {formatCurrency(unitData.balance)}
+                <span className={balance > 0 ? 'text-red-600' : 'text-green-600'}>
+                  {formatCurrency(balance)}
                 </span>
               </span>
             </div>
@@ -95,12 +89,8 @@ export default function UnitDetailPage({
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="ledger">Ledger</TabsTrigger>
-          <TabsTrigger value="violations">
-            Violations {unitData.violations.length > 0 && `(${unitData.violations.length})`}
-          </TabsTrigger>
-          <TabsTrigger value="requests">
-            Requests {unitData.maintenanceRequests.length > 0 && `(${unitData.maintenanceRequests.length})`}
-          </TabsTrigger>
+          <TabsTrigger value="violations">Violations</TabsTrigger>
+          <TabsTrigger value="requests">Requests</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -112,22 +102,22 @@ export default function UnitDetailPage({
                 <CardTitle>Owner Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {unitData.ownerName ? (
+                {unit.ownerName ? (
                   <>
                     <div>
                       <p className="text-sm font-medium">Name</p>
-                      <p className="text-sm text-muted-foreground">{unitData.ownerName}</p>
+                      <p className="text-sm text-muted-foreground">{unit.ownerName}</p>
                     </div>
-                    {unitData.ownerEmail && (
+                    {unit.ownerEmail && (
                       <div>
                         <p className="text-sm font-medium">Email</p>
-                        <p className="text-sm text-muted-foreground">{unitData.ownerEmail}</p>
+                        <p className="text-sm text-muted-foreground">{unit.ownerEmail}</p>
                       </div>
                     )}
-                    {unitData.ownerPhone && (
+                    {unit.ownerPhone && (
                       <div>
                         <p className="text-sm font-medium">Phone</p>
-                        <p className="text-sm text-muted-foreground">{unitData.ownerPhone}</p>
+                        <p className="text-sm text-muted-foreground">{unit.ownerPhone}</p>
                       </div>
                     )}
                   </>
@@ -142,14 +132,26 @@ export default function UnitDetailPage({
               <CardHeader>
                 <CardTitle>Tenant Information</CardTitle>
               </CardHeader>
-              <CardContent>
-                {unitData.tenantName ? (
-                  <div className="space-y-2">
+              <CardContent className="space-y-2">
+                {unit.tenantName ? (
+                  <>
                     <div>
                       <p className="text-sm font-medium">Name</p>
-                      <p className="text-sm text-muted-foreground">{unitData.tenantName}</p>
+                      <p className="text-sm text-muted-foreground">{unit.tenantName}</p>
                     </div>
-                  </div>
+                    {unit.tenantEmail && (
+                      <div>
+                        <p className="text-sm font-medium">Email</p>
+                        <p className="text-sm text-muted-foreground">{unit.tenantEmail}</p>
+                      </div>
+                    )}
+                    {unit.tenantPhone && (
+                      <div>
+                        <p className="text-sm font-medium">Phone</p>
+                        <p className="text-sm text-muted-foreground">{unit.tenantPhone}</p>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <p className="text-sm text-muted-foreground">No tenant</p>
                 )}
@@ -166,8 +168,8 @@ export default function UnitDetailPage({
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-medium">Current Balance</span>
-                  <span className={`text-2xl font-bold ${unitData.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                    {formatCurrency(unitData.balance)}
+                  <span className={`text-2xl font-bold ${balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {formatCurrency(balance)}
                   </span>
                 </div>
                 <div className="flex gap-2">
@@ -185,14 +187,14 @@ export default function UnitDetailPage({
           </Card>
 
           {/* Registered Residents */}
-          {unitData.residents.length > 0 && (
+          {unit.residents && unit.residents.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Registered Residents</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {unitData.residents.map((resident: any) => (
+                  {unit.residents.map((resident: any) => (
                     <div key={resident.id} className="flex items-center justify-between rounded-lg border p-3">
                       <div>
                         <p className="font-medium">{resident.firstName} {resident.lastName}</p>
@@ -214,9 +216,20 @@ export default function UnitDetailPage({
               <CardTitle>Financial Ledger</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Ledger functionality will be implemented in Phase 3
-              </p>
+              {ledgerLoading ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  Loading ledger...
+                </div>
+              ) : (
+                <LedgerTable
+                  unitId={id}
+                  unitAddress={unit.address}
+                  entries={ledgerEntries}
+                  balance={balance}
+                  onRefresh={refetchLedger}
+                  isAdmin={true}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -4,6 +4,7 @@ import { communityRouter } from './community'
 import { unitsRouter } from './units'
 import { usersRouter } from './users'
 import { invitationsRouter } from './invitations'
+import { ledgerRouter } from './ledger'
 
 /**
  * Main tRPC router
@@ -15,8 +16,8 @@ export const appRouter = router({
   units: unitsRouter,
   users: usersRouter,
   invitations: invitationsRouter,
+  ledger: ledgerRouter,
   // Additional routers will be added as we build them:
-  // ledger: ledgerRouter,
   // violations: violationsRouter,
   // maintenance: maintenanceRouter,
   // announcements: announcementsRouter,

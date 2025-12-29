@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building2, Users, DollarSign, AlertTriangle } from 'lucide-react'
+import { calculateBalance } from '@/lib/utils/balance'
 
 export default async function DashboardPage() {
   const { userId, orgId } = await auth()
@@ -36,8 +37,22 @@ export default async function DashboardPage() {
     openViolations: 0,
   }
 
+  // Fetch resident's unit and balance (for both admin and resident views)
+  let residentBalance = 0
+  if (user.unitId) {
+    const unit = await prisma.unit.findUnique({
+      where: { id: user.unitId },
+      include: {
+        ledgerEntries: true,
+      },
+    })
+    if (unit) {
+      residentBalance = calculateBalance(unit.ledgerEntries)
+    }
+  }
+
   if (isAdmin) {
-    const [unitsCount, residentsCount, violations] = await Promise.all([
+    const [unitsCount, residentsCount, violations, units] = await Promise.all([
       prisma.unit.count({
         where: { communityId: user.communityId },
       }),
@@ -57,12 +72,24 @@ export default async function DashboardPage() {
           },
         },
       }),
+      prisma.unit.findMany({
+        where: { communityId: user.communityId },
+        include: {
+          ledgerEntries: true,
+        },
+      }),
     ])
+
+    // Calculate total outstanding dues across all units
+    const totalOutstanding = units.reduce((sum, unit) => {
+      const balance = calculateBalance(unit.ledgerEntries)
+      return sum + (balance > 0 ? balance : 0)
+    }, 0)
 
     stats = {
       totalUnits: unitsCount,
       activeResidents: residentsCount,
-      outstandingDues: 0, // Will calculate when ledger is implemented
+      outstandingDues: totalOutstanding,
       openViolations: violations,
     }
   }
@@ -170,10 +197,18 @@ export default async function DashboardPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Current Balance</span>
-                  <span className="text-2xl font-bold">$0.00</span>
+                  <span
+                    className={`text-2xl font-bold ${
+                      residentBalance > 0 ? 'text-red-600' : 'text-green-600'
+                    }`}
+                  >
+                    ${residentBalance.toFixed(2)}
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Your account is in good standing.
+                  {residentBalance > 0
+                    ? `You have an outstanding balance of $${residentBalance.toFixed(2)}.`
+                    : 'Your account is in good standing.'}
                 </p>
               </div>
             </CardContent>
