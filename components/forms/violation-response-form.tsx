@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 
 interface ViolationResponseFormProps {
   violationId: string
-  onSubmit: (data: { message: string; isInternal: boolean }) => Promise<void>
+  onSubmit: (data: { message: string; isInternal: boolean }) => Promise<any>
   isLoading?: boolean
   canCreateInternal?: boolean
 }

@@ -1,9 +1,8 @@
 {
   "compilerOptions": {
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "target": "ES2023",
-    "ignoreDeprecations": "6.0",
     "lib": [
       "dom",
       "dom.iterable",

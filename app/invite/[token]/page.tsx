@@ -135,7 +135,8 @@ export default function InvitationAcceptancePage({
                 </Button>
               </SignInButton>
             </div>
-          </SignedIn>
+          </SignedOut>
+          <SignedIn>
             <form onSubmit={handleAccept} className="space-y-4">
               <div className="rounded-lg bg-muted p-4">
                 <p className="text-sm">

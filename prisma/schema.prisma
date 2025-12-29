@@ -31,6 +31,7 @@ enum ViolationStatus {
   ACKNOWLEDGED
   RESOLVED
   CLOSED
+  DISMISSED
 }
 
 enum ViolationType {
@@ -53,6 +54,7 @@ enum MaintenanceStatus {
 }
 
 enum MaintenanceCategory {
+  GENERAL
   COMMON_AREA
   EXTERIOR
   PLUMBING
@@ -61,6 +63,9 @@ enum MaintenanceCategory {
   LANDSCAPING
   SECURITY
   OTHER
+  PEST_CONTROL
+  APPLIANCE
+  STRUCTURAL
 }
 
 enum Urgency {

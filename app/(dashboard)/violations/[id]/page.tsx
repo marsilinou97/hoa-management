@@ -340,7 +340,7 @@ export default function ViolationDetailPage({
                 </Button>
               </div>
 
-              {violation.ledgerEntry && (
+              {violation.ledgerEntries && (
                 <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3">
                   <div className="flex items-center gap-2 text-sm">
                     <DollarSign className="h-4 w-4 text-green-600" />
