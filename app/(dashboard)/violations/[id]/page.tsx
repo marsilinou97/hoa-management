@@ -143,7 +143,7 @@ export default function ViolationDetailPage({
             variant="outline"
             size="sm"
             onClick={handleDelete}
-            disabled={deleteViolation.isLoading}
+            disabled={deleteViolation.isPending}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
@@ -252,7 +252,7 @@ export default function ViolationDetailPage({
                       attachments: data.attachments || [],
                     })
                   }
-                  isLoading={submitResponse.isLoading}
+                  isLoading={submitResponse.isPending}
                 />
               </div>
             </CardContent>
@@ -302,7 +302,7 @@ export default function ViolationDetailPage({
                   onClick={() => handleStatusChange(ViolationStatus.ACKNOWLEDGED)}
                   disabled={
                     violation.status === ViolationStatus.ACKNOWLEDGED ||
-                    updateViolation.isLoading
+                    updateViolation.isPending
                   }
                 >
                   Mark as Acknowledged
@@ -314,7 +314,7 @@ export default function ViolationDetailPage({
                   onClick={() => handleStatusChange(ViolationStatus.RESOLVED)}
                   disabled={
                     violation.status === ViolationStatus.RESOLVED ||
-                    updateViolation.isLoading
+                    updateViolation.isPending
                   }
                 >
                   Mark as Resolved
@@ -326,7 +326,7 @@ export default function ViolationDetailPage({
                   onClick={() => handleStatusChange(ViolationStatus.CLOSED)}
                   disabled={
                     violation.status === ViolationStatus.CLOSED ||
-                    updateViolation.isLoading
+                    updateViolation.isPending
                   }
                 >
                   Close Violation

@@ -19,14 +19,14 @@ export default function MaintenanceDetailPage({
   const { id } = use(params)
   const router = useRouter()
   const [updateMessage, setUpdateMessage] = useState('')
-  const [isInternal, setIsInternal] = useState(false)
+  const [isPublic, setIsPublic] = useState(true)
 
   const { data: request, isLoading, refetch } = trpc.maintenance.get.useQuery({ id })
 
   const addUpdate = trpc.maintenance.addUpdate.useMutation({
     onSuccess: () => {
       setUpdateMessage('')
-      setIsInternal(false)
+      setIsPublic(true)
       refetch()
     },
   })
@@ -60,7 +60,7 @@ export default function MaintenanceDetailPage({
     await addUpdate.mutateAsync({
       requestId: id,
       message: updateMessage.trim(),
-      isInternal,
+      isPublic,
     })
   }
 
@@ -116,7 +116,7 @@ export default function MaintenanceDetailPage({
             </div>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={handleDelete} disabled={deleteRequest.isLoading}>
+        <Button variant="outline" size="sm" onClick={handleDelete} disabled={deleteRequest.isPending}>
           <Trash2 className="mr-2 h-4 w-4" />
           Delete
         </Button>
@@ -194,7 +194,7 @@ export default function MaintenanceDetailPage({
                           {update.createdBy.firstName} {update.createdBy.lastName}
                         </p>
                         <Badge variant="outline" className="text-xs">{update.createdBy.role}</Badge>
-                        {update.isInternal && (
+                        {!update.isPublic && (
                           <Badge variant="secondary" className="text-xs">
                             <Lock className="mr-1 h-3 w-3" />
                             Internal
@@ -226,8 +226,8 @@ export default function MaintenanceDetailPage({
                     placeholder="Type your update..."
                   />
                 </div>
-                <Button type="submit" disabled={addUpdate.isLoading || !updateMessage.trim()}>
-                  {addUpdate.isLoading ? 'Submitting...' : 'Submit Update'}
+                <Button type="submit" disabled={addUpdate.isPending || !updateMessage.trim()}>
+                  {addUpdate.isPending ? 'Submitting...' : 'Submit Update'}
                 </Button>
               </form>
             </CardContent>
@@ -248,7 +248,7 @@ export default function MaintenanceDetailPage({
                   size="sm"
                   className="w-full justify-start"
                   onClick={() => handleStatusChange(MaintenanceStatus.IN_REVIEW)}
-                  disabled={request.status === MaintenanceStatus.IN_REVIEW || updateRequest.isLoading}
+                  disabled={request.status === MaintenanceStatus.IN_REVIEW || updateRequest.isPending}
                 >
                   Mark In Review
                 </Button>
@@ -257,7 +257,7 @@ export default function MaintenanceDetailPage({
                   size="sm"
                   className="w-full justify-start"
                   onClick={() => handleStatusChange(MaintenanceStatus.IN_PROGRESS)}
-                  disabled={request.status === MaintenanceStatus.IN_PROGRESS || updateRequest.isLoading}
+                  disabled={request.status === MaintenanceStatus.IN_PROGRESS || updateRequest.isPending}
                 >
                   Mark In Progress
                 </Button>
@@ -266,7 +266,7 @@ export default function MaintenanceDetailPage({
                   size="sm"
                   className="w-full justify-start"
                   onClick={() => handleStatusChange(MaintenanceStatus.COMPLETED)}
-                  disabled={request.status === MaintenanceStatus.COMPLETED || updateRequest.isLoading}
+                  disabled={request.status === MaintenanceStatus.COMPLETED || updateRequest.isPending}
                 >
                   Mark Completed
                 </Button>
@@ -275,7 +275,7 @@ export default function MaintenanceDetailPage({
                   size="sm"
                   className="w-full justify-start"
                   onClick={() => handleStatusChange(MaintenanceStatus.DECLINED)}
-                  disabled={request.status === MaintenanceStatus.DECLINED || updateRequest.isLoading}
+                  disabled={request.status === MaintenanceStatus.DECLINED || updateRequest.isPending}
                 >
                   Decline Request
                 </Button>

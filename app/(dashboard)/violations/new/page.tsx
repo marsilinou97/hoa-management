@@ -56,7 +56,7 @@ function NewViolationContent() {
         unitAddress={unit?.address}
         onSubmit={handleSubmit}
         onCancel={() => router.push('/violations')}
-        isLoading={createViolation.isLoading}
+        isLoading={createViolation.isPending}
       />
     </div>
   )

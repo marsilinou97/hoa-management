@@ -139,7 +139,7 @@ export function LedgerTable({
         currentBalance={balance}
         onSubmit={handleLogPayment}
         onCancel={() => setShowPaymentForm(false)}
-        isLoading={logPayment.isLoading}
+        isLoading={logPayment.isPending}
       />
     )
   }
