@@ -11,6 +11,7 @@ import { formatCurrency } from '@/lib/utils/balance'
 import { trpc } from '@/app/client'
 import { LedgerTable } from '@/components/tables/ledger-table'
 import { ViolationsTable } from '@/components/tables/violations-table'
+import { MaintenanceRequestsTable } from '@/components/tables/maintenance-requests-table'
 
 export default function UnitDetailPage({
   params,
@@ -27,6 +28,8 @@ export default function UnitDetailPage({
   } = trpc.ledger.getByUnit.useQuery({ unitId: id })
   const { data: violations, isLoading: violationsLoading } =
     trpc.violations.getByUnit.useQuery({ unitId: id })
+  const { data: maintenanceRequests, isLoading: maintenanceLoading } =
+    trpc.maintenance.getByUnit.useQuery({ unitId: id })
 
   if (isLoading) {
     return <div className="p-6">Loading...</div>
@@ -264,12 +267,24 @@ export default function UnitDetailPage({
         <TabsContent value="requests">
           <Card>
             <CardHeader>
-              <CardTitle>Maintenance Requests</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Maintenance Requests</CardTitle>
+                <Link href={`/maintenance/new?unitId=${id}`}>
+                  <Button size="sm">New Request</Button>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                No maintenance requests for this unit
-              </p>
+              {maintenanceLoading ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  Loading requests...
+                </div>
+              ) : (
+                <MaintenanceRequestsTable
+                  requests={maintenanceRequests ?? []}
+                  showUnit={false}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -6,6 +6,8 @@ import { usersRouter } from './users'
 import { invitationsRouter } from './invitations'
 import { ledgerRouter } from './ledger'
 import { violationsRouter } from './violations'
+import { maintenanceRouter } from './maintenance'
+import { announcementsRouter } from './announcements'
 
 /**
  * Main tRPC router
@@ -19,9 +21,9 @@ export const appRouter = router({
   invitations: invitationsRouter,
   ledger: ledgerRouter,
   violations: violationsRouter,
+  maintenance: maintenanceRouter,
+  announcements: announcementsRouter,
   // Additional routers will be added as we build them:
-  // maintenance: maintenanceRouter,
-  // announcements: announcementsRouter,
   // documents: documentsRouter,
   // uploads: uploadsRouter,
   // dashboard: dashboardRouter,
