@@ -2,13 +2,18 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useOrganization } from '@clerk/nextjs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Building2 } from 'lucide-react'
+import { Building2, AlertCircle } from 'lucide-react'
+import { trpc } from '@/app/_trpc/client'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const { setActive } = useOrganization()
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -17,22 +22,28 @@ export default function OnboardingPage() {
     zip: '',
   })
 
+  const createCommunity = trpc.community.create.useMutation()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
 
     try {
-      // TODO: Call tRPC mutation to create community
-      // For now, we'll just log the data
-      console.log('Creating community:', formData)
+      // Create community (which creates Clerk org and DB record)
+      const community = await createCommunity.mutateAsync(formData)
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Switch to the newly created organization in Clerk
+      if (setActive) {
+        await setActive({ organization: community.clerkOrgId })
+      }
 
       // Redirect to dashboard
       router.push('/dashboard')
+      router.refresh()
     } catch (error) {
       console.error('Failed to create community:', error)
+      setError(error instanceof Error ? error.message : 'Failed to create community. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -61,6 +72,13 @@ export default function OnboardingPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium">
                 Community Name <span className="text-red-500">*</span>
