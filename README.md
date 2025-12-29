@@ -1,69 +1,200 @@
-<p align="center">
-  <a href="https://clerk.com?utm_source=github&utm_medium=clerk_docs" target="_blank" rel="noopener noreferrer">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="./public/light-logo.png">
-      <img alt="Clerk Logo for light background" src="./public/dark-logo.png" height="64">
-    </picture>
-  </a>
-  <br />
-</p>
-<div align="center">
-  <h1>
-    Clerk, Next.js App Router, tRPC, Prisma Demo
-  </h1>
-  <a href="https://www.npmjs.com/package/@clerk/clerk-js">
-    <img alt="Downloads" src="https://img.shields.io/npm/dm/@clerk/clerk-js" />
-  </a>
-  <a href="https://discord.com/invite/b5rXHjAg7A">
-    <img alt="Discord" src="https://img.shields.io/discord/856971667393609759?color=7389D8&label&logo=discord&logoColor=ffffff" />
-  </a>
-  <a href="https://twitter.com/clerkdev">
-    <img alt="Twitter" src="https://img.shields.io/twitter/url.svg?label=%40clerkdev&style=social&url=https%3A%2F%2Ftwitter.com%2Fclerkdev" />
-  </a>
-  <br />
-  <br />
-  <img alt="Clerk Hero Image" src="./public/hero.png">
-</div>
+# HOA Hub
 
-## Introduction
+Modern, affordable HOA management software for small to medium communities (10-200 units).
 
-Clerk is a developer-first authentication and user management solution. It provides pre-built React components and hooks for sign-in, sign-up, user profile, and organization management. Clerk is designed to be easy to use and customize, and can be dropped into any React or Next.js application.
+## Overview
 
-This repository demonstrates how to use Clerk to create a tRPC context that uses Clerk's authentication context, so that you can use Clerk's authentication state in your tRPC procedures. For more information, see the [guide in the Clerk Docs](https://clerk.com/docs/references/nextjs/trpc).
+HOA Hub provides an intuitive platform for homeowners associations to manage units, residents, dues, violations, maintenance requests, and community communications. Built with modern web technologies for reliability and ease of use.
 
-## Deploy
+## Tech Stack
 
-Easily deploy the template to Vercel with the button below. You will need to set the required environment variables in the Vercel dashboard.
+- **Framework:** Next.js 15 (App Router)
+- **Language:** TypeScript
+- **API:** tRPC v10
+- **Auth:** Clerk (with Organizations)
+- **Database:** PostgreSQL + Prisma ORM
+- **UI:** shadcn/ui + Tailwind CSS
+- **Notifications:** Novu
+- **File Storage:** Cloudflare R2
+- **Deployment:** Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fclerk%2Fclerk-nextjs-trpc-prisma&env=NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,CLERK_SECRET_KEY&envDescription=Clerk%20API%20keys&envLink=https%3A%2F%2Fclerk.com%2Fdocs%2Freferences%2Fnextjs%2Ftrpc&redirect-url=https%3A%2F%2Fclerk.com%2Fdocs%2Freferences%2Fnextjs%2Ftrpc)
+## Features
 
-## Running the template
+### For Administrators
+- Unit and resident management
+- Payment tracking and ledger system
+- Violation management with photos
+- Maintenance request tracking
+- Community announcements
+- Document library
+- Email notifications
 
-```bash
-git clone https://github.com/clerk/clerk-nextjs-trpc-prisma
+### For Residents
+- View account balance and payment history
+- Submit maintenance requests
+- Respond to violations
+- Access community documents
+- Receive announcements
+- Manage notification preferences
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ and npm
+- PostgreSQL database (recommend Neon for serverless)
+- Clerk account for authentication
+- Cloudflare account for R2 storage (optional for MVP)
+- Novu account for notifications (optional for MVP)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd hoa-management
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+
+   Fill in your environment variables:
+   - Clerk API keys
+   - Database URL
+   - R2 credentials (optional)
+   - Novu credentials (optional)
+
+4. **Set up the database**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
+
+5. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+6. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## Project Structure
+
+```
+├── app/                    # Next.js app directory
+│   ├── (auth)/            # Auth-related pages
+│   ├── (dashboard)/       # Dashboard and main app pages
+│   ├── api/               # API routes
+│   └── server/            # tRPC server code
+├── components/            # React components
+│   ├── ui/               # shadcn/ui components
+│   ├── forms/            # Form components
+│   ├── tables/           # Data table components
+│   └── layout/           # Layout components
+├── lib/                   # Utility functions and configs
+├── prisma/               # Database schema and migrations
+├── hooks/                # Custom React hooks
+└── types/                # TypeScript type definitions
 ```
 
-To run the example locally, you need to:
+## Development Workflow
 
-1. `npm install` the required dependencies. You may need to use `--force` to handle dependency issues from the React release candidate.
-1. `npm run dev` to launch the development server.
-1. Select the "Sign in" button in the top-right corner of the app's homepage.
+1. **Create a feature branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
 
-## Learn more
+2. **Make your changes**
+   - Update Prisma schema if needed
+   - Create/update tRPC routers
+   - Build UI components
+   - Test thoroughly
 
-To learn more about Clerk and Next.js, check out the following resources:
+3. **Run type checking**
+   ```bash
+   npm run build
+   ```
 
-- [Quickstart: Get started with Next.js and Clerk](https://clerk.com/docs/quickstarts/nextjs?utm_source=DevRel&utm_medium=docs&utm_campaign=templates&utm_content=clerk-nextjs-trpc)
+4. **Commit and push**
+   ```bash
+   git add .
+   git commit -m "Description of changes"
+   git push origin feature/your-feature-name
+   ```
 
-- [Clerk Documentation](https://clerk.com/docs?utm_source=DevRel&utm_medium=docs&utm_campaign=templates&utm_content=clerk-nextjs-trpc-prisma)
-- [Next.js Documentation](https://nextjs.org/docs)
+## Documentation
 
-## Found an issue or want to leave feedback
+- [Product Requirements Document](./prd.md) - Complete feature specifications
+- [Implementation Plan](./PLAN.md) - Phased development roadmap
 
-Feel free to create a support thread on our [Discord](https://clerk.com/discord). Our support team will be happy to assist you in the `#support` channel.
+## Deployment
 
-## Connect with us
+### Vercel (Recommended)
 
-You can discuss ideas, ask questions, and meet others from the community in our [Discord](https://discord.com/invite/b5rXHjAg7A).
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Add environment variables
+4. Deploy
 
-If you prefer, you can also find support through our [Twitter](https://twitter.com/ClerkDev), or you can [email](mailto:support@clerk.dev) us!
+The app will automatically deploy on every push to main.
+
+### Database Migrations
+
+For production deployments, use Prisma migrations:
+
+```bash
+npx prisma migrate deploy
+```
+
+## Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npx prisma studio` - Open Prisma Studio (database GUI)
+- `npx prisma generate` - Generate Prisma Client
+- `npx prisma db push` - Push schema changes (dev only)
+- `npx prisma migrate dev` - Create and apply migration
+
+## Environment Variables
+
+See `.env.example` for all required environment variables.
+
+### Required
+- `DATABASE_URL` - PostgreSQL connection string
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk publishable key
+- `CLERK_SECRET_KEY` - Clerk secret key
+
+### Optional (for full features)
+- `R2_*` - Cloudflare R2 configuration
+- `NOVU_*` - Novu notification configuration
+- `NEXT_PUBLIC_APP_URL` - App URL for emails/links
+
+## Contributing
+
+1. Follow TypeScript best practices
+2. Use meaningful variable and function names
+3. Write clean, DRY code
+4. Validate all inputs with Zod
+5. Handle errors gracefully
+6. Test edge cases
+
+## License
+
+Proprietary - All rights reserved
+
+## Support
+
+For issues or questions, contact: [your-contact-info]
+
+---
+
+**Built with ❤️ for HOA communities**

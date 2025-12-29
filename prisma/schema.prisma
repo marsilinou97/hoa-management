@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// This is your Prisma schema file for HOA Hub
+// Complete schema with all models from PRD
 
 generator client {
   provider = "prisma-client-js"
@@ -13,9 +10,402 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id       Int     @id @default(autoincrement())
-  title    String
-  content  String?
-  authorId String
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  RESIDENT
+}
+
+enum AssessmentFrequency {
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+}
+
+enum ViolationStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  CLOSED
+}
+
+enum ViolationType {
+  PARKING
+  LANDSCAPING
+  EXTERIOR_MAINTENANCE
+  NOISE
+  TRASH
+  PET
+  ARCHITECTURAL
+  OTHER
+}
+
+enum MaintenanceStatus {
+  SUBMITTED
+  IN_REVIEW
+  IN_PROGRESS
+  COMPLETED
+  DECLINED
+}
+
+enum MaintenanceCategory {
+  COMMON_AREA
+  EXTERIOR
+  PLUMBING
+  ELECTRICAL
+  HVAC
+  LANDSCAPING
+  SECURITY
+  OTHER
+}
+
+enum Urgency {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+
+enum PaymentMethod {
+  CHECK
+  CASH
+  BANK_TRANSFER
+  ONLINE
+  OTHER
+}
+
+enum LedgerEntryType {
+  ASSESSMENT
+  LATE_FEE
+  VIOLATION_FINE
+  SPECIAL_ASSESSMENT
+  PAYMENT
+  CREDIT
+  ADJUSTMENT
+}
+
+// ============================================
+// CORE MODELS
+// ============================================
+
+model Community {
+  id                    String               @id @default(cuid())
+  clerkOrgId            String               @unique // Clerk organization ID
+  name                  String
+  address               String?
+  city                  String?
+  state                 String?
+  zip                   String?
+  logo                  String?              // R2 URL
+
+  // Assessment configuration
+  assessmentAmount      Decimal?             @db.Decimal(10, 2)
+  assessmentFrequency   AssessmentFrequency  @default(MONTHLY)
+  assessmentDueDay      Int                  @default(1) // 1-28
+  gracePeriodDays       Int                  @default(15)
+  lateFeeAmount         Decimal?             @db.Decimal(10, 2)
+
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  // Relations
+  units                 Unit[]
+  users                 User[]
+  announcements         Announcement[]
+  documents             Document[]
+  documentFolders       DocumentFolder[]
+  invitations           Invitation[]
+
+  @@index([clerkOrgId])
+}
+
+model User {
+  id              String    @id @default(cuid())
+  clerkUserId     String    @unique
+  email           String
+  firstName       String
+  lastName        String
+  phone           String?
+  avatarUrl       String?
+  role            Role
+
+  // Notification preferences
+  emailPayments       Boolean @default(true)
+  emailViolations     Boolean @default(true)
+  emailMaintenance    Boolean @default(true)
+  emailAnnouncements  Boolean @default(true)
+
+  communityId     String
+  community       Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  unitId          String?   // null for admins
+  unit            Unit?     @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations - created by this user
+  createdViolations       Violation[]          @relation("ViolationCreator")
+  violationResponses      ViolationResponse[]
+  createdRequests         MaintenanceRequest[] @relation("RequestCreator")
+  maintenanceUpdates      MaintenanceUpdate[]
+  createdAnnouncements    Announcement[]
+  createdDocuments        Document[]
+  loggedPayments          LedgerEntry[]        @relation("PaymentLogger")
+
+  @@unique([clerkUserId, communityId])
+  @@index([communityId])
+  @@index([unitId])
+}
+
+model Unit {
+  id              String    @id @default(cuid())
+  address         String    // Full address or unit number
+  communityId     String
+  community       Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  // Owner info (may or may not be a registered user)
+  ownerName       String?
+  ownerEmail      String?
+  ownerPhone      String?
+
+  // Tenant info (optional)
+  tenantName      String?
+  tenantEmail     String?
+  tenantPhone     String?
+
+  moveInDate      DateTime?
+  notes           String?   @db.Text // Admin notes
+  isActive        Boolean   @default(true)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  residents           User[]
+  ledgerEntries       LedgerEntry[]
+  violations          Violation[]
+  maintenanceRequests MaintenanceRequest[]
+
+  @@unique([communityId, address])
+  @@index([communityId])
+}
+
+// ============================================
+// FINANCIAL MODELS
+// ============================================
+
+model LedgerEntry {
+  id              String          @id @default(cuid())
+  unitId          String
+  unit            Unit            @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  type            LedgerEntryType
+  amount          Decimal         @db.Decimal(10, 2) // Positive for charges, negative for payments
+  description     String
+  date            DateTime        @default(now())
+
+  // For payments
+  paymentMethod   PaymentMethod?
+  referenceNumber String?         // Check number, transaction ID, etc.
+
+  // For violation fines
+  violationId     String?
+  violation       Violation?      @relation(fields: [violationId], references: [id], onDelete: SetNull)
+
+  notes           String?         @db.Text
+
+  createdById     String
+  createdBy       User            @relation("PaymentLogger", fields: [createdById], references: [id])
+  createdAt       DateTime        @default(now())
+
+  @@index([unitId])
+  @@index([date])
+}
+
+// ============================================
+// VIOLATION MODELS
+// ============================================
+
+model Violation {
+  id              String           @id @default(cuid())
+  unitId          String
+  unit            Unit             @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  type            ViolationType
+  title           String
+  description     String           @db.Text
+  photos          String[]         // R2 URLs
+
+  status          ViolationStatus  @default(OPEN)
+  fineAmount      Decimal?         @db.Decimal(10, 2)
+  dueDate         DateTime?
+
+  createdById     String
+  createdBy       User             @relation("ViolationCreator", fields: [createdById], references: [id])
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  closedAt        DateTime?
+
+  // Relations
+  responses       ViolationResponse[]
+  ledgerEntries   LedgerEntry[]    // Fine entries
+
+  @@index([unitId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ViolationResponse {
+  id              String    @id @default(cuid())
+  violationId     String
+  violation       Violation @relation(fields: [violationId], references: [id], onDelete: Cascade)
+
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+
+  message         String    @db.Text
+  attachments     String[]  // R2 URLs
+
+  createdAt       DateTime  @default(now())
+
+  @@index([violationId])
+}
+
+// ============================================
+// MAINTENANCE MODELS
+// ============================================
+
+model MaintenanceRequest {
+  id              String              @id @default(cuid())
+  unitId          String
+  unit            Unit                @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  title           String
+  description     String              @db.Text
+  category        MaintenanceCategory
+  urgency         Urgency             @default(MEDIUM)
+  location        String?             // Specific location details
+  photos          String[]            // R2 URLs
+
+  status          MaintenanceStatus   @default(SUBMITTED)
+  adminNotes      String?             @db.Text // Private notes for admins
+
+  createdById     String
+  createdBy       User                @relation("RequestCreator", fields: [createdById], references: [id])
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  completedAt     DateTime?
+
+  // Relations
+  updates         MaintenanceUpdate[]
+
+  @@index([unitId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model MaintenanceUpdate {
+  id              String             @id @default(cuid())
+  requestId       String
+  request         MaintenanceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  userId          String
+  user            User               @relation(fields: [userId], references: [id])
+
+  message         String             @db.Text
+  isPublic        Boolean            @default(true) // false = admin-only note
+  newStatus       MaintenanceStatus? // If status was changed
+
+  createdAt       DateTime           @default(now())
+
+  @@index([requestId])
+}
+
+// ============================================
+// COMMUNICATION MODELS
+// ============================================
+
+model Announcement {
+  id              String    @id @default(cuid())
+  communityId     String
+  community       Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  title           String
+  content         String    @db.Text
+  isPinned        Boolean   @default(false)
+
+  createdById     String
+  createdBy       User      @relation(fields: [createdById], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([communityId])
+  @@index([createdAt])
+}
+
+model DocumentFolder {
+  id              String     @id @default(cuid())
+  communityId     String
+  community       Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  name            String
+  parentId        String?
+  parent          DocumentFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children        DocumentFolder[] @relation("FolderHierarchy")
+
+  documents       Document[]
+
+  createdAt       DateTime  @default(now())
+
+  @@unique([communityId, name, parentId])
+  @@index([communityId])
+}
+
+model Document {
+  id              String          @id @default(cuid())
+  communityId     String
+  community       Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  folderId        String?
+  folder          DocumentFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  name            String
+  description     String?         @db.Text
+  fileUrl         String          // R2 URL
+  fileType        String          // MIME type
+  fileSize        Int             // Bytes
+
+  createdById     String
+  createdBy       User            @relation(fields: [createdById], references: [id])
+  createdAt       DateTime        @default(now())
+
+  @@index([communityId])
+  @@index([folderId])
+}
+
+// ============================================
+// INVITATION MODEL
+// ============================================
+
+model Invitation {
+  id              String    @id @default(cuid())
+  communityId     String
+  community       Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  email           String
+  unitId          String
+  token           String    @unique @default(cuid())
+
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+
+  createdAt       DateTime  @default(now())
+
+  @@unique([communityId, email])
+  @@index([token])
 }
