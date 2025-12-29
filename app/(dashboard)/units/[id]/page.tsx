@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils/balance'
 import { trpc } from '@/app/client'
 import { LedgerTable } from '@/components/tables/ledger-table'
+import { ViolationsTable } from '@/components/tables/violations-table'
 
 export default function UnitDetailPage({
   params,
@@ -24,6 +25,8 @@ export default function UnitDetailPage({
     isLoading: ledgerLoading,
     refetch: refetchLedger,
   } = trpc.ledger.getByUnit.useQuery({ unitId: id })
+  const { data: violations, isLoading: violationsLoading } =
+    trpc.violations.getByUnit.useQuery({ unitId: id })
 
   if (isLoading) {
     return <div className="p-6">Loading...</div>
@@ -238,12 +241,21 @@ export default function UnitDetailPage({
         <TabsContent value="violations">
           <Card>
             <CardHeader>
-              <CardTitle>Violations</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Violations</CardTitle>
+                <Link href={`/violations/new?unitId=${id}`}>
+                  <Button size="sm">Report Violation</Button>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                No violations for this unit
-              </p>
+              {violationsLoading ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  Loading violations...
+                </div>
+              ) : (
+                <ViolationsTable violations={violations ?? []} showUnit={false} />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
